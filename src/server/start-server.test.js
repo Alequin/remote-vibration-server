@@ -137,4 +137,34 @@ describe("startServer", () => {
       expect(rooms.findRoom(testRoom.id).users).toHaveLength(1);
     });
   });
+
+  it("allows multiple users to connect to a room", async () => {
+    const testRoom = rooms.createRoom();
+
+    for (const client of [new WebSocketClient(), new WebSocketClient()]) {
+      const sendConnectToRoomMessage = new Promise((resolve, reject) => {
+        client.on("connect", (connection) => {
+          connection.send(
+            JSON.stringify({
+              type: "connectToRoom",
+              data: { roomId: testRoom.id },
+            }),
+            resolve
+          );
+        });
+        client.on("connectFailed", reject);
+      });
+
+      client.connect(`ws://localhost:${testPort}`);
+      await sendConnectToRoomMessage;
+    }
+
+    await waitFor(() => {
+      // Assert only the 2 expected users are connected at the time of the test
+      expect(connectedUsersList.count()).toBe(2);
+
+      // Assert the two users have been added to the expected room
+      expect(rooms.findRoom(testRoom.id).users).toHaveLength(2);
+    });
+  });
 });
