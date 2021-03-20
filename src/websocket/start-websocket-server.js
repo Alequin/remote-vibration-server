@@ -13,9 +13,6 @@ const startServer = () => {
 
   const aliveLoop = checkIfClientsAreAlive(server, connectedUsersList, {
     interval: toMilliseconds.seconds(2),
-    onDisconnect: (user) => {
-      console.log(`Disconnected user with id ${user.id}`);
-    },
   });
 
   return {

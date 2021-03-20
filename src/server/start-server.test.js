@@ -3,6 +3,7 @@ var { client: WebSocketClient, w3cwebsocket } = require("websocket");
 const { default: waitFor } = require("wait-for-expect");
 const connectedUsers = require("../websocket/connected-users");
 const startServer = require("./start-server");
+const rooms = require("../persistance/rooms");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -19,8 +20,8 @@ describe("startServer", () => {
   });
 
   it("can make a request to the health endpoint", async () => {
-    const foobar = await fetch(`http://localhost:${testPort}/health`);
-    expect(await foobar.text()).toBe("OK");
+    const response = await fetch(`http://localhost:${testPort}/health`);
+    expect(await response.text()).toBe("OK");
   });
 
   it("can connect to the server using web sockets", async () => {
@@ -78,6 +79,25 @@ describe("startServer", () => {
     // Assert the user is recognized as disconnected
     await waitFor(() => {
       expect(removeUserSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("allows a user to create a room", async () => {
+    const response = await fetch(`http://localhost:${testPort}/room`, {
+      method: "post",
+    });
+    const responseJson = await response.json();
+
+    // Assert response contains the created room id
+    expect(responseJson).toHaveProperty("newRoomId");
+    expect(responseJson.newRoomId).toMatch(
+      /........-....-....-....-............/
+    );
+
+    // Assert a room has been created
+    expect(rooms.findRoom(responseJson.newRoomId)).toEqual({
+      id: responseJson.newRoomId,
+      users: [],
     });
   });
 });

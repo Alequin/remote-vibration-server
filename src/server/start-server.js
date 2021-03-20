@@ -1,14 +1,15 @@
 const express = require("express");
 const WebSocket = require("ws");
 const startWebsocketServer = require("../websocket/start-websocket-server");
+const healthEndpoint = require("./endpoints/health-endpoint");
+const roomEndpoints = require("./endpoints/room-endpoints");
 
 const startServer = async ({ port }) =>
   new Promise((resolve) => {
     const app = express();
 
-    app.get("/health", (_, res) => {
-      res.send("OK");
-    });
+    healthEndpoint(app);
+    roomEndpoints.createRoom(app);
 
     const webSocket = startWebsocketServer();
 

@@ -1,4 +1,5 @@
-const { forEach, uniqueId } = require("lodash");
+const { forEach } = require("lodash");
+const { v4: uuidv4 } = require("uuid");
 
 const newConnectedUsersList = () => {
   const connectedUsers = {};
@@ -7,7 +8,7 @@ const newConnectedUsersList = () => {
 
   const addUser = (client) => {
     const user = {
-      id: uniqueId(),
+      id: uuidv4(),
       hasReceivedPong: true,
       client,
     };

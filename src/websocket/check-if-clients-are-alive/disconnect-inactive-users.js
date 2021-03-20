@@ -8,8 +8,10 @@ const disconnectInactiveUsers = (
 ) => {
   const hasUserDisconnected = !wss.clients.has(user.client);
   const hasFailedToReceivedPong = !connectedUsers.hasReceivedPongFromUser(user);
-  if (hasUserDisconnected || hasFailedToReceivedPong)
-    return onDisconnect(connectedUsersList.removeUser(user));
+  if (hasUserDisconnected || hasFailedToReceivedPong) {
+    const removedUser = connectedUsersList.removeUser(user);
+    onDisconnect && onDisconnect(removedUser);
+  }
 };
 
 module.exports = disconnectInactiveUsers;
