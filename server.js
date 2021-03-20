@@ -13,10 +13,7 @@ const connectedUsersList = connectedUsers.newConnectedUsersList();
 onUserStartConnection(wss, connectedUsersList);
 
 const aliveLoop = checkIfClientsAreAlive(wss, connectedUsersList, {
-  interval: toMilliseconds.seconds(5),
-  onPingUser: ({ id }) => {
-    console.log("ping: ", id);
-  },
+  interval: toMilliseconds.seconds(60),
   onDisconnect: (user) => {
     console.log(`Disconnected user with id ${user.id}`);
   },
