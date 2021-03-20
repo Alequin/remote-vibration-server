@@ -1,13 +1,21 @@
 const fetch = require("node-fetch");
-var { client: WebSocketClient } = require("websocket");
+var { client: WebSocketClient, w3cwebsocket } = require("websocket");
+const { default: waitFor } = require("wait-for-expect");
+const connectedUsers = require("../websocket/connected-users");
 const startServer = require("./start-server");
+
+waitFor.defaults.timeout = 15000;
+waitFor.defaults.interval = 1000;
 
 describe("startServer", () => {
   const testPort = 3001;
   let server = null;
-  beforeEach(async () => (server = await startServer({ port: testPort })));
-  afterEach(() => {
-    server.close();
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    server = await startServer({ port: testPort });
+  });
+  afterEach(async () => {
+    await server.closeServers();
   });
 
   it("can make a request to the health endpoint", async () => {
@@ -50,5 +58,26 @@ describe("startServer", () => {
     });
 
     client2.connect(`ws://localhost:${testPort}`);
-  }, 20000);
+  });
+
+  it("stops tracking users on the server when the client closes the connection", async () => {
+    const client = new w3cwebsocket(`ws://localhost:${testPort}`);
+
+    const clientConnection = new Promise((resolve) => {
+      client.onopen = resolve;
+    });
+
+    await clientConnection;
+
+    const removeUserSpy = jest.spyOn(
+      connectedUsers.connectedUsersList,
+      "removeUser"
+    );
+    client.close();
+
+    // Assert the user is recognized as disconnected
+    await waitFor(() => {
+      expect(removeUserSpy).toHaveBeenCalledTimes(1);
+    });
+  });
 });

@@ -1,5 +1,5 @@
 const WebSocket = require("ws");
-const connectedUsers = require("./connected-users");
+const { connectedUsersList } = require("./connected-users");
 const toMilliseconds = require("../to-milliseconds");
 const checkIfClientsAreAlive = require("./check-if-clients-are-alive");
 const onUserStartConnection = require("./on-user-start-connection");
@@ -9,23 +9,28 @@ const startServer = () => {
     noServer: true,
   });
 
-  const connectedUsersList = connectedUsers.newConnectedUsersList();
-
   onUserStartConnection(server, connectedUsersList);
 
   const aliveLoop = checkIfClientsAreAlive(server, connectedUsersList, {
-    interval: toMilliseconds.seconds(60),
+    interval: toMilliseconds.seconds(2),
     onDisconnect: (user) => {
       console.log(`Disconnected user with id ${user.id}`);
     },
   });
 
-  server.on("close", () => {
-    console.log("Closing server");
-    aliveLoop.stop();
-  });
-
-  return server;
+  return {
+    server,
+    closeServer: () => {
+      server.close();
+      return new Promise((resolve) =>
+        server.on("close", () => {
+          connectedUsersList.removeAllUsers();
+          aliveLoop.stop();
+          resolve();
+        })
+      );
+    },
+  };
 };
 
 module.exports = startServer;

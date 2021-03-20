@@ -17,11 +17,15 @@ const startServer = async ({ port }) =>
     // https://www.npmjs.com/package/ws#multiple-servers-sharing-a-single-https-server
     const server = app.listen(port, () => {
       server.on("upgrade", (request, socket, head) => {
-        webSocket.handleUpgrade(request, socket, head, (socket) => {
-          webSocket.emit("connection", socket, request);
+        webSocket.server.handleUpgrade(request, socket, head, (socket) => {
+          webSocket.server.emit("connection", socket, request);
         });
       });
-      resolve(server);
+      resolve({
+        expressServer: server,
+        closeServers: async () =>
+          Promise.all([server.close(), webSocket.closeServer()]),
+      });
     });
   });
 
