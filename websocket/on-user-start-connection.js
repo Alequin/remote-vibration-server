@@ -1,3 +1,4 @@
+const WebSocket = require("ws");
 const connectedUsers = require("./connected-users");
 
 const onUserStartConnection = (wss, connectedUsersList) => {
