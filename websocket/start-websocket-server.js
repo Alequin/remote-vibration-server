@@ -5,29 +5,27 @@ const checkIfClientsAreAlive = require("./check-if-clients-are-alive");
 const onUserStartConnection = require("./on-user-start-connection");
 
 const startServer = () => {
-  const wss = new WebSocket.Server({
-    port: 8080,
+  const server = new WebSocket.Server({
+    noServer: true,
   });
 
   const connectedUsersList = connectedUsers.newConnectedUsersList();
 
-  onUserStartConnection(wss, connectedUsersList);
+  onUserStartConnection(server, connectedUsersList);
 
-  const aliveLoop = checkIfClientsAreAlive(wss, connectedUsersList, {
+  const aliveLoop = checkIfClientsAreAlive(server, connectedUsersList, {
     interval: toMilliseconds.seconds(60),
     onDisconnect: (user) => {
       console.log(`Disconnected user with id ${user.id}`);
     },
   });
 
-  wss.on("close", () => {
+  server.on("close", () => {
     console.log("Closing server");
     aliveLoop.stop();
   });
 
-  return {
-    stop: () => wss.close(),
-  };
+  return server;
 };
 
 module.exports = startServer;

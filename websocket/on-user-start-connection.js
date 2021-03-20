@@ -5,19 +5,18 @@ const onUserStartConnection = (wss, connectedUsersList) => {
   wss.on("connection", function (client) {
     const currentUser = connectedUsersList.addUser(client);
 
-    currentUser.client.send("Welcome to the chat, enjoy :)");
-
     currentUser.client.on("message", (data) => {
-      connectedUsersList.forEachUser(({ id }) => {
+      connectedUsersList.forEachUser(({ id, client }) => {
         const isSender = id === currentUser.id;
         const isConnectionOpen =
           currentUser.client.readyState === WebSocket.OPEN;
-        if (!isSender && isConnectionOpen) client.send(data);
+        if (!isSender && isConnectionOpen) {
+          client.send(data);
+        }
       });
     });
 
     currentUser.client.on("pong", () => {
-      console.log("pong");
       connectedUsers.setReceivedPongStatus(currentUser, true);
     });
   });
