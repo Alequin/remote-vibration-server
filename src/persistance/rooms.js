@@ -17,8 +17,19 @@ const createRoom = () => {
 
 const findRoom = (roomId) => rooms[roomId];
 
+const addUserToRoom = (roomId, user) => {
+  const room = findRoom(roomId);
+  room.users.push(user.id);
+};
+
 const removeRoom = (roomId) => delete rooms[roomId];
 
 const removeAllRooms = () => forEachRoom(({ id }) => removeRoom(id));
 
-module.exports = { createRoom, findRoom, removeRoom, removeAllRooms };
+module.exports = {
+  createRoom,
+  findRoom,
+  addUserToRoom,
+  removeRoom,
+  removeAllRooms,
+};

@@ -1,15 +1,12 @@
-const WebSocket = require("ws");
 const connectedUsers = require("./connected-users");
-const sendMessageToOtherUsers = require("./on-user-start-connection/send-message-to-other-users");
+const processMessage = require("./on-user-start-connection/process-message");
 
 const onUserStartConnection = (wss, connectedUsersList) => {
-  wss.on("connection", function (client) {
+  wss.on("connection", (client) => {
     const currentUser = connectedUsersList.addUser(client);
 
     currentUser.client.on("message", (data) => {
-      connectedUsersList.forEachUser((user) => {
-        sendMessageToOtherUsers(user, currentUser, data);
-      });
+      processMessage(currentUser, JSON.parse(data));
     });
 
     currentUser.client.on("pong", () => {

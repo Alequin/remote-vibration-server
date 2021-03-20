@@ -4,6 +4,7 @@ const { default: waitFor } = require("wait-for-expect");
 const connectedUsers = require("../websocket/connected-users");
 const startServer = require("./start-server");
 const rooms = require("../persistance/rooms");
+const { connectedUsersList } = require("../websocket/connected-users");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -36,29 +37,6 @@ describe("startServer", () => {
 
     // Asserts connection to server resolves
     await expect(actual).resolves.toBeDefined();
-  });
-
-  it("can send a message to the server via web sockets", async (done) => {
-    const client1 = new WebSocketClient();
-    const client2 = new WebSocketClient();
-
-    const expectedMessage = "test message";
-
-    client2.on("connect", (connection2) => {
-      client1.on("connect", (connection1) => {
-        connection1.send(expectedMessage);
-      });
-
-      connection2.on("message", (message) => {
-        // Asserts client 2 gets the message from client 1
-        expect(message.utf8Data).toBe(expectedMessage);
-        done();
-      });
-
-      client1.connect(`ws://localhost:${testPort}`);
-    });
-
-    client2.connect(`ws://localhost:${testPort}`);
   });
 
   it("stops tracking users on the server when the client closes the connection", async () => {
@@ -98,6 +76,65 @@ describe("startServer", () => {
     expect(rooms.findRoom(responseJson.newRoomId)).toEqual({
       id: responseJson.newRoomId,
       users: [],
+    });
+  });
+
+  it("returns an error message if an unknown message type is sent", async () => {
+    const client = new WebSocketClient();
+
+    const sendConnectToRoomMessage = new Promise((resolve) => {
+      client.on("connect", (connection) => {
+        connection.send(
+          // Send a message with a bad type to the server
+          JSON.stringify({
+            type: "bad message type",
+          })
+        );
+
+        connection.on("message", (message) => {
+          const parsedMessage = JSON.parse(message.utf8Data);
+          // Asserts an error message was returned
+          expect(parsedMessage.error).toBe("unknown message type");
+          resolve();
+        });
+      });
+
+      client.on("connectFailed", () => {
+        console.log("connectFailed");
+      });
+    });
+
+    client.connect(`ws://localhost:${testPort}`);
+    await sendConnectToRoomMessage;
+  });
+
+  it("allows a user to connect to a room", async () => {
+    const testRoom = rooms.createRoom();
+
+    const client = new WebSocketClient();
+
+    const sendConnectToRoomMessage = new Promise((resolve, reject) => {
+      client.on("connect", (connection) => {
+        connection.send(
+          JSON.stringify({
+            type: "connectToRoom",
+            data: { roomId: testRoom.id },
+          }),
+          resolve
+        );
+      });
+      client.on("connectFailed", reject);
+    });
+
+    client.connect(`ws://localhost:${testPort}`);
+    await sendConnectToRoomMessage;
+
+    await waitFor(() => {
+      // Assert only the current user is connected at the time of the test
+      expect(connectedUsersList.count()).toBe(1);
+
+      // Assert the user has been added to the expected room
+      expect(rooms.findRoom(testRoom.id).users).toHaveLength(1);
     });
   });
 });

@@ -1,4 +1,4 @@
-const { forEach } = require("lodash");
+const { forEach, size } = require("lodash");
 const { v4: uuidv4 } = require("uuid");
 
 const newConnectedUsersList = () => {
@@ -25,11 +25,14 @@ const newConnectedUsersList = () => {
 
   const removeAllUsers = () => forEachUser(removeUser);
 
+  const count = () => size(connectedUsers);
+
   return {
     forEachUser,
     addUser,
     removeUser,
     removeAllUsers,
+    count,
   };
 };
 
