@@ -1,15 +1,20 @@
 const connectedUsers = require("./connected-users");
 
-const pingClients = (
+const checkIfClientsAreAlive = (
+  wss,
   connectedUsersList,
   { interval, onPingUser, onDisconnect }
 ) => {
   const pingInterval = setInterval(() => {
     connectedUsersList.forEachUser((user) => {
-      if (!connectedUsers.isUserConnectionAlive(user))
+      const hasUserDisconnected = !wss.clients.has(user.client);
+      const hasFailedToReceivedPong = !connectedUsers.hasReceivedPongFromUser(
+        user
+      );
+      if (hasUserDisconnected || hasFailedToReceivedPong)
         return onDisconnect(connectedUsersList.removeUser(user));
 
-      connectedUsers.setConnectionStatusAsDead(user);
+      connectedUsers.setReceivedPongStatus(user, false);
       user.client.ping(() => onPingUser && onPingUser(user));
     });
   }, interval);
@@ -17,4 +22,4 @@ const pingClients = (
   return { stop: () => clearInterval(pingInterval) };
 };
 
-module.exports = pingClients;
+module.exports = checkIfClientsAreAlive;

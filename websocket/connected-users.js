@@ -7,7 +7,7 @@ const newConnectedUsersList = () => {
     addUser: (client) => {
       const user = {
         id: uniqueId(),
-        isAlive: true,
+        hasReceivedPong: true,
         client,
       };
 
@@ -22,15 +22,12 @@ const newConnectedUsersList = () => {
   };
 };
 
-const setConnectionStatusAsAlive = (user) => (user.isAlive = true);
+const setReceivedPongStatus = (user, status) => (user.hasReceivedPong = status);
 
-const setConnectionStatusAsDead = (user) => (user.isAlive = false);
-
-const isUserConnectionAlive = (user) => user.isAlive;
+const hasReceivedPongFromUser = (user) => user.hasReceivedPong;
 
 module.exports = {
   newConnectedUsersList,
-  setConnectionStatusAsAlive,
-  setConnectionStatusAsDead,
-  isUserConnectionAlive,
+  setReceivedPongStatus,
+  hasReceivedPongFromUser,
 };

@@ -1,7 +1,7 @@
 const WebSocket = require("ws");
 const connectedUsers = require("./websocket/connected-users");
 const toMilliseconds = require("./to-milliseconds");
-const pingClients = require("./websocket/ping-clients");
+const checkIfClientsAreAlive = require("./websocket/check-if-clients-are-alive");
 const onUserStartConnection = require("./websocket/on-user-start-connection");
 
 const wss = new WebSocket.Server({
@@ -12,7 +12,7 @@ const connectedUsersList = connectedUsers.newConnectedUsersList();
 
 onUserStartConnection(wss, connectedUsersList);
 
-const ping = pingClients(connectedUsersList, {
+const aliveLoop = checkIfClientsAreAlive(wss, connectedUsersList, {
   interval: toMilliseconds.seconds(5),
   onPingUser: ({ id }) => {
     console.log("ping: ", id);
@@ -22,6 +22,6 @@ const ping = pingClients(connectedUsersList, {
   },
 });
 
-wss.on("close", function close() {
-  ping.stop();
+wss.on("close", () => {
+  aliveLoop.stop();
 });

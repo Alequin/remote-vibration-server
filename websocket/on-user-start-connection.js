@@ -1,12 +1,12 @@
 const connectedUsers = require("./connected-users");
 
 const onUserStartConnection = (wss, connectedUsersList) => {
-  wss.on("connection", function (currentUserClient) {
-    const currentUser = connectedUsersList.addUser(currentUserClient);
+  wss.on("connection", function (client) {
+    const currentUser = connectedUsersList.addUser(client);
 
-    currentUserClient.send("Welcome to the chat, enjoy :)");
+    currentUser.client.send("Welcome to the chat, enjoy :)");
 
-    currentUserClient.on("message", (data) => {
+    currentUser.client.on("message", (data) => {
       connectedUsersList.forEachUser(({ id }) => {
         const isSender = id === currentUser.id;
         const isConnectionOpen =
@@ -15,9 +15,9 @@ const onUserStartConnection = (wss, connectedUsersList) => {
       });
     });
 
-    currentUserClient.on("pong", () => {
+    currentUser.client.on("pong", () => {
       console.log("pong");
-      connectedUsers.setConnectionStatusAsAlive(currentUser);
+      connectedUsers.setReceivedPongStatus(currentUser, true);
     });
   });
 };
