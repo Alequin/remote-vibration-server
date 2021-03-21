@@ -325,7 +325,31 @@ describe("startServer", () => {
     });
   });
 
-  it.todo(
-    "returns an error if a user attempts to send a message to a room that does not exist"
-  );
+  it("returns an error if a user attempts to connect to a room that does not exist", async () => {
+    const client = new WebSocketClient();
+
+    const connectToRoomAndSendMessage = new Promise((resolve, reject) => {
+      client.on("connect", (connection) => {
+        connection.send(
+          JSON.stringify({
+            type: "connectToRoom",
+            // 1. Attempt to connect to a room with an invalid key
+            data: { roomKey: "bad room key" },
+          })
+        );
+
+        connection.on("message", (message) => {
+          // 1. Assert an error message is returned
+          expect(JSON.parse(message.utf8Data).error).toBe(
+            "There is no room for the give key"
+          );
+          resolve();
+        });
+      });
+      client.on("connectFailed", reject);
+    });
+
+    client.connect(`ws://localhost:${testPort}`);
+    await connectToRoomAndSendMessage;
+  });
 });
