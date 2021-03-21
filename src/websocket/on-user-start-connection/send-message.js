@@ -9,7 +9,7 @@ const sendMessage = (currentUser, message) => {
   room.usersIds.forEach((userId) => {
     if (userId.id === currentUser.id) return;
     const user = connectedUsersList.findUserById(userId);
-    sendMessageToUser(user, { message: message.data.message });
+    sendMessageToUser(user, { text: message.data.message });
   });
 };
 
