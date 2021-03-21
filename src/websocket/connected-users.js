@@ -43,8 +43,15 @@ const setReceivedPongStatus = (user, status) => (user.hasReceivedPong = status);
 
 const hasReceivedPongFromUser = (user) => user.hasReceivedPong;
 
+const sendMessageToUser = (user, message) =>
+  user.client.send(JSON.stringify(message));
+const sendErrorMessageToUser = (user, message) =>
+  sendMessageToUser(user, { error: message });
+
 module.exports = {
   connectedUsersList: newConnectedUsersList(),
+  sendMessageToUser,
+  sendErrorMessageToUser,
   setReceivedPongStatus,
   hasReceivedPongFromUser,
 };

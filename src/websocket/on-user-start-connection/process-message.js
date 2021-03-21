@@ -1,14 +1,12 @@
+const { sendErrorMessageToUser } = require("../connected-users");
 const connectToRequestedRoom = require("./connect-to-requested-room");
 const sendMessage = require("./send-message");
 
 const processMessage = (currentUser, message) => {
   const handler = messageHandlers[message.type];
-  if (!handler) {
-    return currentUser.client.send(
-      JSON.stringify({ error: "unknown message type" })
-    );
-  }
-  return handler(currentUser, message);
+  handler
+    ? handler(currentUser, message)
+    : sendErrorMessageToUser(currentUser, "unknown message type");
 };
 const messageHandlers = {
   connectToRoom: connectToRequestedRoom,
