@@ -1,5 +1,6 @@
 const { sendErrorMessageToUser } = require("../connected-users");
 const connectToRequestedRoom = require("./connect-to-requested-room");
+const messageTypes = require("./message-types");
 const sendMessage = require("./send-message");
 
 const processMessage = (currentUser, message) => {
@@ -9,8 +10,8 @@ const processMessage = (currentUser, message) => {
     : sendErrorMessageToUser(currentUser, "unknown message type");
 };
 const messageHandlers = {
-  connectToRoom: connectToRequestedRoom,
-  sendMessage,
+  [messageTypes.connectToRoom]: connectToRequestedRoom,
+  [messageTypes.sendMessage]: sendMessage,
 };
 
 module.exports = processMessage;

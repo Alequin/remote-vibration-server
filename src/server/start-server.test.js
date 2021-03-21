@@ -5,6 +5,7 @@ const connectedUsers = require("../websocket/connected-users");
 const startServer = require("./start-server");
 const rooms = require("../persistance/rooms");
 const { connectedUsersList } = require("../websocket/connected-users");
+const messageTypes = require("../websocket/on-user-start-connection/message-types");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -120,7 +121,7 @@ describe("startServer", () => {
       client.on("connect", (connection) => {
         connection.send(
           JSON.stringify({
-            type: "connectToRoom",
+            type: messageTypes.connectToRoom,
             data: { roomKey: testRoom.key },
           }),
           resolve
@@ -149,7 +150,7 @@ describe("startServer", () => {
         client.on("connect", (connection) => {
           connection.send(
             JSON.stringify({
-              type: "connectToRoom",
+              type: messageTypes.connectToRoom,
               data: { roomKey: testRoom.key },
             }),
             resolve
@@ -183,7 +184,7 @@ describe("startServer", () => {
       client1.on("connect", (connection) => {
         connection.send(
           JSON.stringify({
-            type: "connectToRoom",
+            type: messageTypes.connectToRoom,
             data: { roomKey: testRoom.key },
           }),
           resolve
@@ -209,7 +210,7 @@ describe("startServer", () => {
       client2.on("connect", (connection) => {
         connection.send(
           JSON.stringify({
-            type: "connectToRoom",
+            type: messageTypes.connectToRoom,
             data: { roomKey: testRoom.key },
           }),
           resolve
@@ -225,7 +226,7 @@ describe("startServer", () => {
     // 3. Send a message to the room from second user
     client2Connection.send(
       JSON.stringify({
-        type: "sendMessage",
+        type: messageTypes.sendMessage,
         data: {
           message: expectedMessage,
         },
@@ -246,7 +247,7 @@ describe("startServer", () => {
       client1.on("connect", (connection) => {
         connection.send(
           JSON.stringify({
-            type: "connectToRoom",
+            type: messageTypes.connectToRoom,
             data: { roomKey: testRoom.key },
           }),
           resolve
@@ -271,7 +272,7 @@ describe("startServer", () => {
       client2.on("connect", (connection) => {
         connection.send(
           JSON.stringify({
-            type: "connectToRoom",
+            type: messageTypes.connectToRoom,
             data: { roomKey: otherTestRoom.key },
           }),
           resolve
@@ -295,7 +296,7 @@ describe("startServer", () => {
       client3.on("connect", (connection) => {
         connection.send(
           JSON.stringify({
-            type: "connectToRoom",
+            type: messageTypes.connectToRoom,
             data: { roomKey: testRoom.key },
           }),
           resolve
@@ -311,7 +312,7 @@ describe("startServer", () => {
     // 4. Send a message to the room from third user
     client3Connection.send(
       JSON.stringify({
-        type: "sendMessage",
+        type: messageTypes.sendMessage,
         data: {
           message: expectedMessage,
         },
@@ -332,7 +333,7 @@ describe("startServer", () => {
       client.on("connect", (connection) => {
         connection.send(
           JSON.stringify({
-            type: "connectToRoom",
+            type: messageTypes.connectToRoom,
             // 1. Attempt to connect to a room with an invalid key
             data: { roomKey: "bad room key" },
           })
