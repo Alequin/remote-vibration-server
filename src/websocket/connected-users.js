@@ -23,6 +23,8 @@ const newConnectedUsersList = () => {
     return user;
   };
 
+  const findUserById = (userId) => connectedUsers[userId];
+
   const removeAllUsers = () => forEachUser(removeUser);
 
   const count = () => size(connectedUsers);
@@ -32,6 +34,7 @@ const newConnectedUsersList = () => {
     addUser,
     removeUser,
     removeAllUsers,
+    findUserById,
     count,
   };
 };
