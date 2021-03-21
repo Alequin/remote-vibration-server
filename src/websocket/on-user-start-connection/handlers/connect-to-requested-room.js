@@ -1,5 +1,5 @@
-const rooms = require("../../persistance/rooms");
-const { sendErrorMessageToUser } = require("../connected-users");
+const rooms = require("../../../persistance/rooms");
+const { sendErrorMessageToUser } = require("../../connected-users");
 
 const connectToRequestedRoom = (user, { data: { roomKey } }) => {
   const roomToAddUserTo = rooms.findRoomByKey(roomKey);

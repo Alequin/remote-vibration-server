@@ -228,7 +228,7 @@ describe("startServer", () => {
       JSON.stringify({
         type: messageTypes.sendMessage,
         data: {
-          message: expectedMessage,
+          text: expectedMessage,
         },
       })
     );
@@ -314,7 +314,7 @@ describe("startServer", () => {
       JSON.stringify({
         type: messageTypes.sendMessage,
         data: {
-          message: expectedMessage,
+          text: expectedMessage,
         },
       })
     );
