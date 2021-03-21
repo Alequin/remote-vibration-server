@@ -6,7 +6,7 @@ const sendMessage = (currentUser, message) => {
   room.usersIds.forEach((userId) => {
     if (userId.id === currentUser.id) return;
     const user = connectedUsersList.findUserById(userId);
-    user.client.send(message.data.message);
+    user.client.send(JSON.stringify({ message: message.data.message }));
   });
 };
 

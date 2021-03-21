@@ -191,7 +191,7 @@ describe("startServer", () => {
 
         connection.on("message", (message) => {
           // 4. Assert client1 receives client2's message
-          expect(message.utf8Data).toBe(expectedMessage);
+          expect(JSON.parse(message.utf8Data).message).toBe(expectedMessage);
           done();
         });
       });
@@ -254,7 +254,7 @@ describe("startServer", () => {
 
         connection.on("message", (message) => {
           // 5. Assert client1 receives client3's message
-          expect(message.utf8Data).toBe(expectedMessage);
+          expect(JSON.parse(message.utf8Data).message).toBe(expectedMessage);
           done();
         });
       });
