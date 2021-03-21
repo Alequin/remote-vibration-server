@@ -67,13 +67,17 @@ describe("startServer", () => {
     const responseJson = await response.json();
 
     // Assert response contains the created room id
-    expect(responseJson).toHaveProperty("newRoomId");
     const uuidRegex = /........-....-....-....-............/;
-    expect(responseJson.newRoomId).toMatch(uuidRegex);
+    expect(responseJson.roomId).toMatch(uuidRegex);
+
+    // Assert response contains the room key
+    expect(responseJson.roomKey).toHaveLength(6);
+    expect(responseJson.roomKey).toMatch(/\w*/);
 
     // Assert a room has been created
-    expect(rooms.findRoomById(responseJson.newRoomId)).toEqual({
-      id: responseJson.newRoomId,
+    expect(rooms.findRoomById(responseJson.roomId)).toEqual({
+      id: responseJson.roomId,
+      key: responseJson.roomKey,
       usersIds: [],
     });
   });
@@ -117,7 +121,7 @@ describe("startServer", () => {
         connection.send(
           JSON.stringify({
             type: "connectToRoom",
-            data: { roomId: testRoom.id },
+            data: { roomKey: testRoom.key },
           }),
           resolve
         );
@@ -146,7 +150,7 @@ describe("startServer", () => {
           connection.send(
             JSON.stringify({
               type: "connectToRoom",
-              data: { roomId: testRoom.id },
+              data: { roomKey: testRoom.key },
             }),
             resolve
           );
@@ -180,7 +184,7 @@ describe("startServer", () => {
         connection.send(
           JSON.stringify({
             type: "connectToRoom",
-            data: { roomId: testRoom.id },
+            data: { roomKey: testRoom.key },
           }),
           resolve
         );
@@ -206,7 +210,7 @@ describe("startServer", () => {
         connection.send(
           JSON.stringify({
             type: "connectToRoom",
-            data: { roomId: testRoom.id },
+            data: { roomKey: testRoom.key },
           }),
           resolve
         );
@@ -243,7 +247,7 @@ describe("startServer", () => {
         connection.send(
           JSON.stringify({
             type: "connectToRoom",
-            data: { roomId: testRoom.id },
+            data: { roomKey: testRoom.key },
           }),
           resolve
         );
@@ -268,7 +272,7 @@ describe("startServer", () => {
         connection.send(
           JSON.stringify({
             type: "connectToRoom",
-            data: { roomId: otherTestRoom.id },
+            data: { roomKey: otherTestRoom.key },
           }),
           resolve
         );
@@ -292,7 +296,7 @@ describe("startServer", () => {
         connection.send(
           JSON.stringify({
             type: "connectToRoom",
-            data: { roomId: testRoom.id },
+            data: { roomKey: testRoom.key },
           }),
           resolve
         );

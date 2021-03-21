@@ -6,8 +6,8 @@ const createRoom = (app) => {
   */
 
   app.post("/room", (_, res) => {
-    const { id } = rooms.createRoom();
-    res.json({ newRoomId: id });
+    const { id, key } = rooms.createRoom();
+    res.json({ roomId: id, roomKey: key });
   });
 };
 

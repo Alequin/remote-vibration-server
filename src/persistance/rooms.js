@@ -1,5 +1,6 @@
 const { forEach, find } = require("lodash");
 const { v4: uuidv4 } = require("uuid");
+const newRoomKey = require("./new-room-key");
 
 const rooms = {};
 
@@ -8,6 +9,7 @@ const forEachRoom = (forASingleRoom) => forEach(rooms, forASingleRoom);
 const createRoom = () => {
   const room = {
     id: uuidv4(),
+    key: newUniqueRoomKey(),
     usersIds: [],
   };
 
@@ -15,10 +17,29 @@ const createRoom = () => {
   return rooms[room.id];
 };
 
-const findRoomById = (roomId) => rooms[roomId];
-const findRoomByUser = ({ id }) => {
-  return find(rooms, (room) => room.usersIds.some((userId) => userId === id));
+const newUniqueRoomKey = () => {
+  const keySize = 6;
+  let keyToUse = newRoomKey({ size: keySize });
+
+  // It's unlikely that a key will be a duplicate but just in case
+  // check against other existing rooms and retry if it's not unique
+  let attemptsToFindUniqueKey = 0;
+  while (findRoomByKey(keyToUse)) {
+    attemptsToFindUniqueKey++;
+    if (attemptsToFindUniqueKey > 100) {
+      throw new Error("Unable to create a unique room key");
+    }
+
+    keyToUse = newRoomKey({ size: keySize });
+  }
+
+  return keyToUse;
 };
+
+const findRoomById = (roomId) => rooms[roomId];
+const findRoomByUser = ({ id }) =>
+  find(rooms, (room) => room.usersIds.some((userId) => userId === id));
+const findRoomByKey = (roomKey) => find(rooms, (room) => room.key === roomKey);
 
 const addUserToRoom = (roomId, user) => {
   const room = findRoomById(roomId);
@@ -33,6 +54,7 @@ module.exports = {
   createRoom,
   findRoomById,
   findRoomByUser,
+  findRoomByKey,
   addUserToRoom,
   removeRoom,
   removeAllRooms,
