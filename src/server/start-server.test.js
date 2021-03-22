@@ -1,3 +1,8 @@
+jest.mock(
+  "../websocket/check-if-clients-are-alive/check-alive-clients-interval",
+  () => ({ checkAliveClientsInterval: () => 2000 })
+);
+
 const fetch = require("node-fetch");
 var { client: WebSocketClient, w3cwebsocket } = require("websocket");
 const { default: waitFor } = require("wait-for-expect");

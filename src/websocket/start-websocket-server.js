@@ -28,9 +28,7 @@ const startServer = () => {
 
   onUserStartConnection(server, connectedUsersList);
 
-  const aliveLoop = checkIfClientsAreAlive(server, connectedUsersList, {
-    interval: toMilliseconds.seconds(2),
-  });
+  const aliveLoop = checkIfClientsAreAlive(server, connectedUsersList);
 
   return {
     server,

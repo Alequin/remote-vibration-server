@@ -1,8 +1,8 @@
 const connectedUsers = require("../connected-users");
 
-const pingActiveUsers = (user, onPingUser) => {
+const pingActiveUsers = (user) => {
   connectedUsers.setReceivedPongStatus(user, false);
-  user.client.ping(() => onPingUser && onPingUser(user));
+  user.client.ping(noop);
 };
 
 module.exports = pingActiveUsers;
