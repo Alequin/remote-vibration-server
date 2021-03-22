@@ -5,9 +5,10 @@ const createRoom = (app) => {
      - Should stop the same person from creating multiple rooms
   */
 
-  app.post("/room", (_, res) => {
-    const { id, key } = rooms.createRoom();
-    res.json({ roomId: id, roomKey: key });
+  app.post("/room", (req, res) => {
+    const creatorDeviceId = req.header("deviceId");
+    const { key } = rooms.createRoom(creatorDeviceId);
+    res.json({ roomKey: key });
   });
 };
 

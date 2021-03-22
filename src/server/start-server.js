@@ -1,12 +1,17 @@
 const express = require("express");
-const WebSocket = require("ws");
 const startWebsocketServer = require("../websocket/start-websocket-server");
 const healthEndpoint = require("./endpoints/health-endpoint");
 const roomEndpoints = require("./endpoints/room-endpoints");
+const confirmDeviceIdHeaderMiddleware = require("./middleware/confirm-device-id-header-middleware");
 
 const startServer = async ({ port }) =>
   new Promise((resolve) => {
     const app = express();
+
+    // parse application/json
+    app.use(express.json());
+
+    confirmDeviceIdHeaderMiddleware(app);
 
     healthEndpoint(app);
     roomEndpoints.createRoom(app);

@@ -27,7 +27,11 @@ describe("startServer", () => {
   });
 
   it("can make a request to the health endpoint", async () => {
-    const response = await fetch(`http://localhost:${testPort}/health`);
+    const response = await fetch(`http://localhost:${testPort}/health`, {
+      headers: {
+        deviceId: "123",
+      },
+    });
     expect(await response.text()).toBe(
       `{"status":"OK","totalConnectionUsers":0,"totalOpenRooms":0}`
     );
@@ -70,24 +74,33 @@ describe("startServer", () => {
 
   it("allows a user to create a room", async () => {
     const response = await fetch(`http://localhost:${testPort}/room`, {
-      method: "post",
+      method: "POST",
+      headers: {
+        deviceId: "123",
+      },
     });
-    const responseJson = await response.json();
 
-    // Assert response contains the created room id
-    const uuidRegex = /........-....-....-....-............/;
-    expect(responseJson.roomId).toMatch(uuidRegex);
+    const responseJson = await response.json();
 
     // Assert response contains the room key
     expect(responseJson.roomKey).toHaveLength(6);
     expect(responseJson.roomKey).toMatch(/\w*/);
 
     // Assert a room has been created
-    expect(rooms.findRoomById(responseJson.roomId)).toEqual({
-      id: responseJson.roomId,
-      key: responseJson.roomKey,
-      usersIds: [],
+    const createdRoom = rooms.findRoomByKey(responseJson.roomKey);
+
+    expect(createdRoom.id).toBeDefined();
+    expect(createdRoom.key).toBe(responseJson.roomKey);
+    expect(createdRoom.usersIds).toEqual([]);
+    expect(createdRoom.creatorDeviceId).toEqual("123");
+  });
+
+  it("Errors if a device id is not given in the headers when making rest requests", async () => {
+    const response = await fetch(`http://localhost:${testPort}/room`, {
+      method: "POST",
     });
+
+    expect(response.status).toBe(403);
   });
 
   it("returns an error message if an unknown message type is sent", async () => {

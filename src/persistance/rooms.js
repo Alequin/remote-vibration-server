@@ -6,11 +6,12 @@ const rooms = {};
 
 const forEachRoom = (forASingleRoom) => forEach(rooms, forASingleRoom);
 
-const createRoom = () => {
+const createRoom = (creatorDeviceId) => {
   const room = {
     id: uuidv4(),
     key: newUniqueRoomKey(),
     usersIds: [],
+    creatorDeviceId,
   };
 
   rooms[room.id] = room;
