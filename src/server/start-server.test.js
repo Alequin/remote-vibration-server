@@ -353,4 +353,70 @@ describe("startServer", () => {
     client.connect(`ws://localhost:${testPort}`);
     await connectToRoomAndSendMessage;
   });
+
+  it("allows a user who is connected to a room to send a vibration pattern to other users in the same room", async (done) => {
+    const mockVibrationPatternObject = { pattern: [] };
+
+    const testRoom = rooms.createRoom();
+
+    const client1 = new WebSocketClient();
+
+    const expectedMessage = "hello";
+
+    // 1. Connect first user and wait for the message to arrive
+    const connectToRoom1 = new Promise((resolve, reject) => {
+      client1.on("connect", (connection) => {
+        connection.send(
+          JSON.stringify({
+            type: messageTypes.connectToRoom,
+            data: { roomKey: testRoom.key },
+          }),
+          resolve
+        );
+
+        connection.on("message", (message) => {
+          // 4. Assert client1 receives client2's vibration pattern
+          expect(JSON.parse(message.utf8Data).vibrationPattern).toEqual(
+            mockVibrationPatternObject
+          );
+          done();
+        });
+      });
+      client1.on("connectFailed", reject);
+    });
+
+    client1.connect(`ws://localhost:${testPort}`);
+    await connectToRoom1;
+
+    const client2 = new WebSocketClient();
+
+    // 2. Connect second user
+    let client2Connection = null;
+    const connectToRoomAndSendMessage2 = new Promise((resolve, reject) => {
+      client2.on("connect", (connection) => {
+        connection.send(
+          JSON.stringify({
+            type: messageTypes.connectToRoom,
+            data: { roomKey: testRoom.key },
+          }),
+          resolve
+        );
+        client2Connection = connection;
+      });
+      client2.on("connectFailed", reject);
+    });
+
+    client2.connect(`ws://localhost:${testPort}`);
+    await connectToRoomAndSendMessage2;
+
+    // 3. Send a vibration pattern to the room from second user
+    client2Connection.send(
+      JSON.stringify({
+        type: messageTypes.sendVibrationPattern,
+        data: {
+          vibrationPattern: mockVibrationPatternObject,
+        },
+      })
+    );
+  });
 });

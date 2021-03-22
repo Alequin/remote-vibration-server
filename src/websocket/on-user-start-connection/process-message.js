@@ -1,7 +1,5 @@
 const { sendErrorMessageToUser } = require("../connected-users");
-const connectToRequestedRoom = require("./connect-to-requested-room");
 const messageTypes = require("./message-types");
-const sendMessage = require("./send-message");
 
 const processMessage = (currentUser, message) => {
   const handler = messageHandlers[message.type];
@@ -10,8 +8,9 @@ const processMessage = (currentUser, message) => {
     : sendErrorMessageToUser(currentUser, "unknown message type");
 };
 const messageHandlers = {
-  [messageTypes.connectToRoom]: connectToRequestedRoom,
-  [messageTypes.sendMessage]: sendMessage,
+  [messageTypes.connectToRoom]: require("./handlers/connect-to-requested-room"),
+  [messageTypes.sendMessage]: require("./handlers/send-message"),
+  [messageTypes.sendVibrationPattern]: require("./handlers/send-vibration-pattern"),
 };
 
 module.exports = processMessage;
