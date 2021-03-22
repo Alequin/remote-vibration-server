@@ -23,7 +23,9 @@ describe("startServer", () => {
 
   it("can make a request to the health endpoint", async () => {
     const response = await fetch(`http://localhost:${testPort}/health`);
-    expect(await response.text()).toBe("OK");
+    expect(await response.text()).toBe(
+      `{"status":"OK","totalConnectionUsers":0,"totalOpenRooms":0}`
+    );
   });
 
   it("can connect to the server using web sockets", async () => {

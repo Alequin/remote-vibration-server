@@ -1,4 +1,4 @@
-const { forEach, find } = require("lodash");
+const { forEach, find, size } = require("lodash");
 const { v4: uuidv4 } = require("uuid");
 const newRoomKey = require("./new-room-key");
 
@@ -46,6 +46,8 @@ const addUserToRoom = (roomId, user) => {
   room.usersIds.push(user.id);
 };
 
+const countOpenRooms = () => size(rooms);
+
 const removeRoom = (roomId) => delete rooms[roomId];
 
 const removeAllRooms = () => forEachRoom(({ id }) => removeRoom(id));
@@ -58,4 +60,5 @@ module.exports = {
   addUserToRoom,
   removeRoom,
   removeAllRooms,
+  countOpenRooms,
 };
