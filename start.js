@@ -1,5 +1,7 @@
-const startServer = require("./server/start-server");
+const startServer = require("./src/server/start-server");
 
-startServer({ port: 3000 }).then((server) => {
-  console.log("Server running on port", server.address().port);
+const port = process.env.PORT || 3000;
+
+startServer({ port }).then(({ expressServer }) => {
+  console.log("Server running on port", expressServer.address().port);
 });
