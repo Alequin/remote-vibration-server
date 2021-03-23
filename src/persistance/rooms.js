@@ -50,6 +50,9 @@ const addUserToRoom = (roomId, user) => {
   room.userIds.push(user.id);
 };
 
+const findRoomByCreatorId = (creatorDeviceId) =>
+  find(rooms, (room) => room.creatorDeviceId === creatorDeviceId);
+
 const countOpenRooms = () => size(rooms);
 
 const removeRoom = (roomId) => delete rooms[roomId];
@@ -67,6 +70,7 @@ module.exports = {
   findRoomById,
   findRoomByUser,
   findRoomByKey,
+  findRoomByCreatorId,
   addUserToRoom,
   forEachRoom,
   removeRoom,

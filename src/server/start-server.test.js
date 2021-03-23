@@ -134,6 +134,23 @@ describe("startServer", () => {
     expect(createdRoom.creatorDeviceId).toEqual("123");
   });
 
+  it("does not create a new room if the user has a room associated with their device id", async () => {
+    const deviceId = "123";
+    const testRoom = rooms.createRoom(deviceId);
+
+    const response = await fetch(`http://localhost:${testPort}/room`, {
+      method: "POST",
+      headers: {
+        deviceId,
+      },
+    });
+
+    const responseJson = await response.json();
+
+    // Returned room key should match the test rooms key
+    expect(responseJson.roomKey).toBe(testRoom.key);
+  });
+
   it("Errors if a device id is not given in the headers when making rest requests", async () => {
     const response = await fetch(`http://localhost:${testPort}/room`, {
       method: "POST",
