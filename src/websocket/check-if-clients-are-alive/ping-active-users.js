@@ -1,4 +1,4 @@
-const { noop } = require("lodash");
+const noop = require("lodash/noop");
 const connectedUsers = require("../connected-users");
 
 const pingActiveUsers = (user) => {
