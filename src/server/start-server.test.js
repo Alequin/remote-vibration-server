@@ -51,7 +51,7 @@ describe("startServer", () => {
     await expect(actual).resolves.toBeDefined();
   });
 
-  it("stops tracking users on the server when the client closes the connection", async () => {
+  it("disconnects users when the client closes the connection", async () => {
     const client = new w3cwebsocket(`ws://localhost:${testPort}`);
 
     const clientConnection = new Promise((resolve) => {
@@ -70,6 +70,45 @@ describe("startServer", () => {
     await waitFor(() => {
       expect(removeUserSpy).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it("removes users who are disconnected from the server from any rooms", async () => {
+    const testRoom = rooms.createRoom();
+
+    const client = new w3cwebsocket(`ws://localhost:${testPort}`);
+
+    const clientConnection = new Promise((resolve) => {
+      client.onopen = () => {
+        client.send(
+          JSON.stringify({
+            type: messageTypes.connectToRoom,
+            data: { roomKey: testRoom.key },
+          })
+        );
+        resolve();
+      };
+    });
+    await clientConnection;
+
+    await waitFor(() =>
+      // 1. Assert the user has connected to the room
+      expect(rooms.findRoomById(testRoom.id).userIds).toHaveLength(1)
+    );
+
+    // 2. close the clients connection
+    const removeUserSpy = jest.spyOn(
+      connectedUsers.connectedUsersList,
+      "removeUser"
+    );
+    client.close();
+
+    // 3. Assert the user is recognized as disconnected
+    await waitFor(() => expect(removeUserSpy).toHaveBeenCalledTimes(1));
+
+    // 4. Assert the user is no longer in the testRoom
+    await waitFor(() =>
+      expect(rooms.findRoomById(testRoom.id).userIds).toHaveLength(0)
+    );
   });
 
   it("allows a user to create a room", async () => {
@@ -91,7 +130,7 @@ describe("startServer", () => {
 
     expect(createdRoom.id).toBeDefined();
     expect(createdRoom.key).toBe(responseJson.roomKey);
-    expect(createdRoom.usersIds).toEqual([]);
+    expect(createdRoom.userIds).toEqual([]);
     expect(createdRoom.creatorDeviceId).toEqual("123");
   });
 
@@ -158,7 +197,7 @@ describe("startServer", () => {
       expect(connectedUsersList.count()).toBe(1);
 
       // Assert the user has been added to the expected room
-      expect(rooms.findRoomById(testRoom.id).usersIds).toHaveLength(1);
+      expect(rooms.findRoomById(testRoom.id).userIds).toHaveLength(1);
     });
   });
 
@@ -188,7 +227,7 @@ describe("startServer", () => {
       expect(connectedUsersList.count()).toBe(2);
 
       // Assert the two users have been added to the expected room
-      expect(rooms.findRoomById(testRoom.id).usersIds).toHaveLength(2);
+      expect(rooms.findRoomById(testRoom.id).userIds).toHaveLength(2);
     });
   });
 
@@ -341,8 +380,8 @@ describe("startServer", () => {
 
     await waitFor(() => {
       // 6. Assert all the rooms have the expected number of users
-      expect(rooms.findRoomById(testRoom.id).usersIds).toHaveLength(2);
-      expect(rooms.findRoomById(otherTestRoom.id).usersIds).toHaveLength(1);
+      expect(rooms.findRoomById(testRoom.id).userIds).toHaveLength(2);
+      expect(rooms.findRoomById(otherTestRoom.id).userIds).toHaveLength(1);
     });
   });
 

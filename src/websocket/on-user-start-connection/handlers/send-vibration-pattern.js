@@ -6,7 +6,7 @@ const {
 
 const sendVibrationPattern = (currentUser, message) => {
   const room = rooms.findRoomByUser(currentUser);
-  room.usersIds.forEach((userId) => {
+  room.userIds.forEach((userId) => {
     if (userId.id === currentUser.id) return;
     const user = connectedUsersList.findUserById(userId);
     sendMessageToUser(user, { ...message.data });

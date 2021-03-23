@@ -1,6 +1,5 @@
 const WebSocket = require("ws");
 const { connectedUsersList } = require("./connected-users");
-const toMilliseconds = require("../to-milliseconds");
 const checkIfClientsAreAlive = require("./check-if-clients-are-alive");
 const onUserStartConnection = require("./on-user-start-connection");
 

@@ -1,6 +1,7 @@
-const { forEach, find, size } = require("lodash");
+const { forEach, find, size, isNil } = require("lodash");
 const { v4: uuidv4 } = require("uuid");
 const newRoomKey = require("./new-room-key");
+const assert = require("assert");
 
 const rooms = {};
 
@@ -10,7 +11,7 @@ const createRoom = (creatorDeviceId) => {
   const room = {
     id: uuidv4(),
     key: newUniqueRoomKey(),
-    usersIds: [],
+    userIds: [],
     creatorDeviceId,
   };
 
@@ -39,17 +40,23 @@ const newUniqueRoomKey = () => {
 
 const findRoomById = (roomId) => rooms[roomId];
 const findRoomByUser = ({ id }) =>
-  find(rooms, (room) => room.usersIds.some((userId) => userId === id));
+  find(rooms, (room) => room.userIds.some((userId) => userId === id));
 const findRoomByKey = (roomKey) => find(rooms, (room) => room.key === roomKey);
 
 const addUserToRoom = (roomId, user) => {
   const room = findRoomById(roomId);
-  room.usersIds.push(user.id);
+  room.userIds.push(user.id);
 };
 
 const countOpenRooms = () => size(rooms);
 
 const removeRoom = (roomId) => delete rooms[roomId];
+
+const removeUserFromAllRooms = (user) =>
+  forEachRoom(
+    (room) =>
+      (room.userIds = room.userIds.filter((userId) => userId !== user.id))
+  );
 
 const removeAllRooms = () => forEachRoom(({ id }) => removeRoom(id));
 
@@ -59,7 +66,9 @@ module.exports = {
   findRoomByUser,
   findRoomByKey,
   addUserToRoom,
+  forEachRoom,
   removeRoom,
+  removeUserFromAllRooms,
   removeAllRooms,
   countOpenRooms,
 };
