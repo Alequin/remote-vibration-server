@@ -2,6 +2,8 @@ const WebSocket = require("ws");
 const { connectedUsersList } = require("./connected-users");
 const checkIfClientsAreAlive = require("./check-if-clients-are-alive");
 const onUserStartConnection = require("./on-user-start-connection");
+const checkIfRoomsAreAbandoned = require("./check-if-rooms-are-abandoned");
+const rooms = require("../persistance/rooms");
 
 const startServer = () => {
   const server = new WebSocket.Server({
@@ -28,6 +30,7 @@ const startServer = () => {
   onUserStartConnection(server, connectedUsersList);
 
   const aliveLoop = checkIfClientsAreAlive(server, connectedUsersList);
+  const activeRoomsLoop = checkIfRoomsAreAbandoned(rooms);
 
   return {
     server,
@@ -36,6 +39,7 @@ const startServer = () => {
         server.on("close", () => {
           connectedUsersList.removeAllUsers();
           aliveLoop.stop();
+          activeRoomsLoop.stop();
           resolve();
         })
       );

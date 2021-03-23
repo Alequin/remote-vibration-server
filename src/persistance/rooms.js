@@ -15,6 +15,7 @@ const createRoom = (creatorDeviceId) => {
     key: newUniqueRoomKey(),
     userIds: [],
     creatorDeviceId,
+    lastValidCheckTime: new Date(),
   };
 
   rooms[room.id] = room;

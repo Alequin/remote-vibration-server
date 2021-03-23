@@ -3,6 +3,11 @@ jest.mock(
   () => ({ checkAliveClientsInterval: () => 2000 })
 );
 
+jest.mock(
+  "../websocket/check-if-rooms-are-abandoned/check-rooms-interval",
+  () => ({ checkRoomsInterval: () => 2000 })
+);
+
 const fetch = require("node-fetch");
 var { client: WebSocketClient, w3cwebsocket } = require("websocket");
 const { default: waitFor } = require("wait-for-expect");
@@ -11,14 +16,16 @@ const startServer = require("./start-server");
 const rooms = require("../persistance/rooms");
 const { connectedUsersList } = require("../websocket/connected-users");
 const messageTypes = require("../websocket/on-user-start-connection/message-types");
+const toMilliseconds = require("../to-milliseconds");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
 
 describe("startServer", () => {
-  const testPort = 3001;
+  const testPort = 3002;
   let server = null;
   beforeEach(async () => {
+    rooms.removeAllRooms();
     jest.clearAllMocks();
     server = await startServer({ port: testPort });
   });
@@ -151,7 +158,24 @@ describe("startServer", () => {
     expect(responseJson.roomKey).toBe(testRoom.key);
   });
 
-  it("Errors if a device id is not given in the headers when making rest requests", async () => {
+  it("removes room if it have been open for too long with no connected users", async () => {
+    const testRoom = rooms.createRoom("123");
+
+    // The room should exist
+    expect(rooms.findRoomById(testRoom.id)).toBeDefined();
+
+    // Set time to twice the required period to be considered abandoned
+    testRoom.lastValidCheckTime = new Date(
+      Date.now() - toMilliseconds.minutes(60)
+    );
+
+    await waitFor(() =>
+      // After a period of time the room should be removed
+      expect(rooms.findRoomById(testRoom.id)).not.toBeDefined()
+    );
+  });
+
+  it("errors if a device id is not given in the headers when making rest requests", async () => {
     const response = await fetch(`http://localhost:${testPort}/room`, {
       method: "POST",
     });
