@@ -8,6 +8,8 @@ const rooms = {};
 const forEachRoom = (forASingleRoom) => forEach(rooms, forASingleRoom);
 
 const createRoom = (creatorDeviceId) => {
+  assert(!isNil(creatorDeviceId));
+
   const room = {
     id: uuidv4(),
     key: newUniqueRoomKey(),

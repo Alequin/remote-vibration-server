@@ -73,7 +73,7 @@ describe("startServer", () => {
   });
 
   it("removes users who are disconnected from the server from any rooms", async () => {
-    const testRoom = rooms.createRoom();
+    const testRoom = rooms.createRoom("123");
 
     const client = new w3cwebsocket(`ws://localhost:${testPort}`);
 
@@ -172,7 +172,7 @@ describe("startServer", () => {
   });
 
   it("allows a user to connect to a room", async () => {
-    const testRoom = rooms.createRoom();
+    const testRoom = rooms.createRoom("123");
 
     const client = new WebSocketClient();
 
@@ -202,7 +202,7 @@ describe("startServer", () => {
   });
 
   it("allows multiple users to connect to a room", async () => {
-    const testRoom = rooms.createRoom();
+    const testRoom = rooms.createRoom("123");
 
     for (const client of [new WebSocketClient(), new WebSocketClient()]) {
       const connectToRoomAndSendMessage = new Promise((resolve, reject) => {
@@ -232,7 +232,7 @@ describe("startServer", () => {
   });
 
   it("allows a user who is connected to a room to send a message to other users in the same room", async (done) => {
-    const testRoom = rooms.createRoom();
+    const testRoom = rooms.createRoom("123");
 
     const client1 = new WebSocketClient();
 
@@ -294,8 +294,8 @@ describe("startServer", () => {
   });
 
   it("does not send message to users connected to other rooms", async (done) => {
-    const testRoom = rooms.createRoom();
-    const otherTestRoom = rooms.createRoom();
+    const testRoom = rooms.createRoom("123");
+    const otherTestRoom = rooms.createRoom("123");
 
     const client1 = new WebSocketClient();
 
@@ -416,7 +416,7 @@ describe("startServer", () => {
   it("allows a user who is connected to a room to send a vibration pattern to other users in the same room", async (done) => {
     const mockVibrationPatternObject = { pattern: [] };
 
-    const testRoom = rooms.createRoom();
+    const testRoom = rooms.createRoom("123");
 
     const client1 = new WebSocketClient();
 
