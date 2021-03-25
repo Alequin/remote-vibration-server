@@ -6,7 +6,11 @@ const onUserStartConnection = (wss, connectedUsersList) => {
     const currentUser = connectedUsersList.addUser(client);
 
     currentUser.client.on("message", (data) => {
-      processMessage(currentUser, JSON.parse(data));
+      try {
+        processMessage(currentUser, JSON.parse(data));
+      } catch (error) {
+        // TODO add error logging
+      }
     });
 
     currentUser.client.on("pong", () => {

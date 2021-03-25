@@ -17,7 +17,6 @@ const startServer = () => {
   });
 
   server.on("request", () => {
-    console.log("on request");
     if (originIsAllowed(request.origin)) return;
 
     // Make sure we only accept requests from an allowed origin

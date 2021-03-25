@@ -476,7 +476,10 @@ describe("startServer", () => {
           // 4. Assert client1 receives client2's vibration pattern
           expect(JSON.parse(message.utf8Data)).toEqual({
             type: messageTypes.receivedVibrationPattern,
-            vibrationPattern: mockVibrationPatternObject,
+            data: {
+              vibrationPattern: mockVibrationPatternObject,
+              speed: 1,
+            },
           });
           done();
         });
@@ -509,6 +512,139 @@ describe("startServer", () => {
     await connectToRoomAndSendMessage2;
 
     // 3. Send a vibration pattern to the room from second user
+    client2Connection.send(
+      JSON.stringify({
+        type: messageTypes.sendVibrationPattern,
+        data: {
+          vibrationPattern: mockVibrationPatternObject,
+          speed: 1,
+        },
+      })
+    );
+  });
+
+  it("errors when sending a 'receivedVibrationPattern' message and the data property has unexpected props", async (done) => {
+    const mockVibrationPatternObject = { pattern: [] };
+
+    const testRoom = rooms.createRoom("123");
+
+    const client2 = new WebSocketClient();
+    // 2. Connect second user
+    let client2Connection = null;
+    const connectToRoomAndSendMessage2 = new Promise((resolve, reject) => {
+      client2.on("connect", (connection) => {
+        connection.send(
+          JSON.stringify({
+            type: messageTypes.connectToRoom,
+            data: { roomKey: testRoom.key },
+          }),
+          resolve
+        );
+        client2Connection = connection;
+      });
+      client2.on("connectFailed", reject);
+    });
+
+    client2.connect(`ws://localhost:${testPort}`);
+    await connectToRoomAndSendMessage2;
+
+    client2Connection.on("message", (message) => {
+      // 4. Assert an error message is returned to the client
+      expect(JSON.parse(message.utf8Data)).toEqual({
+        error: "sendVibrationPattern: Invalid properties provided",
+      });
+      done();
+    });
+
+    // 3. Send a vibration pattern but include some bad data
+    client2Connection.send(
+      JSON.stringify({
+        type: messageTypes.sendVibrationPattern,
+        data: {
+          vibrationPattern: mockVibrationPatternObject,
+          speed: 1,
+          notAProp: true,
+        },
+      })
+    );
+  });
+
+  it("errors when sending a 'receivedVibrationPattern' message and the data property is missing the prop 'vibrationPattern'", async (done) => {
+    const testRoom = rooms.createRoom("123");
+
+    const client2 = new WebSocketClient();
+    // 2. Connect second user
+    let client2Connection = null;
+    const connectToRoomAndSendMessage2 = new Promise((resolve, reject) => {
+      client2.on("connect", (connection) => {
+        connection.send(
+          JSON.stringify({
+            type: messageTypes.connectToRoom,
+            data: { roomKey: testRoom.key },
+          }),
+          resolve
+        );
+        client2Connection = connection;
+      });
+      client2.on("connectFailed", reject);
+    });
+
+    client2.connect(`ws://localhost:${testPort}`);
+    await connectToRoomAndSendMessage2;
+
+    client2Connection.on("message", (message) => {
+      // 4. Assert an error message is returned to the client
+      expect(JSON.parse(message.utf8Data)).toEqual({
+        error: "sendVibrationPattern: Missing properties",
+      });
+      done();
+    });
+
+    // 3. Send a vibration pattern but include some bad data
+    client2Connection.send(
+      JSON.stringify({
+        type: messageTypes.sendVibrationPattern,
+        data: {
+          speed: 1,
+        },
+      })
+    );
+  });
+
+  it("errors when sending a 'receivedVibrationPattern' message and the data property is missing the prop 'speed'", async (done) => {
+    const mockVibrationPatternObject = { pattern: [] };
+
+    const testRoom = rooms.createRoom("123");
+
+    const client2 = new WebSocketClient();
+    // 2. Connect second user
+    let client2Connection = null;
+    const connectToRoomAndSendMessage2 = new Promise((resolve, reject) => {
+      client2.on("connect", (connection) => {
+        connection.send(
+          JSON.stringify({
+            type: messageTypes.connectToRoom,
+            data: { roomKey: testRoom.key },
+          }),
+          resolve
+        );
+        client2Connection = connection;
+      });
+      client2.on("connectFailed", reject);
+    });
+
+    client2.connect(`ws://localhost:${testPort}`);
+    await connectToRoomAndSendMessage2;
+
+    client2Connection.on("message", (message) => {
+      // 4. Assert an error message is returned to the client
+      expect(JSON.parse(message.utf8Data)).toEqual({
+        error: "sendVibrationPattern: Missing properties",
+      });
+      done();
+    });
+
+    // 3. Send a vibration pattern but include some bad data
     client2Connection.send(
       JSON.stringify({
         type: messageTypes.sendVibrationPattern,
@@ -558,6 +694,7 @@ describe("startServer", () => {
         type: messageTypes.sendVibrationPattern,
         data: {
           vibrationPattern: mockVibrationPatternObject,
+          speed: 1,
         },
       })
     );
