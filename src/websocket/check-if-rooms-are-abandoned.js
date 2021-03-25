@@ -13,7 +13,10 @@ const checkIfRoomsAreAbandoned = (rooms) => {
   return { stop: () => clearInterval(interval) };
 };
 
-const removeAbandonedRooms = (rooms) => {
+const removeAbandonedRooms = (rooms) =>
+  findAbandonedRooms(rooms).forEach((roomId) => rooms.removeRoom(roomId));
+
+const findAbandonedRooms = (rooms) => {
   const roomsIdsToRemove = [];
   rooms.forEachRoom((room) => {
     const haveAllUsersDisconnected = isEmpty(room.userIds);
@@ -25,8 +28,7 @@ const removeAbandonedRooms = (rooms) => {
 
     if (canDeleteRoom) roomsIdsToRemove.push(room.id);
   });
-
-  roomsIdsToRemove.forEach((roomId) => rooms.removeRoom(roomId));
+  return roomsIdsToRemove;
 };
 
 const updateLastValidCheckTimes = (rooms) =>

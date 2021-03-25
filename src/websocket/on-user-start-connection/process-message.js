@@ -7,6 +7,7 @@ const processMessage = (currentUser, message) => {
     ? handler(currentUser, message)
     : sendErrorMessageToUser(currentUser, "unknown message type");
 };
+
 const messageHandlers = {
   [messageTypes.connectToRoom]: require("./handlers/connect-to-requested-room"),
   [messageTypes.sendMessage]: require("./handlers/send-message"),
