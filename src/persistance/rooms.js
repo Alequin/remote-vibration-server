@@ -1,4 +1,4 @@
-const { forEach, find, size, isNil } = require("lodash");
+const { forEach, find, size, isNil, toLower } = require("lodash");
 const { v4: uuidv4 } = require("uuid");
 const newRoomKey = require("./new-room-key");
 const assert = require("assert");
@@ -44,7 +44,8 @@ const newUniqueRoomKey = () => {
 const findRoomById = (roomId) => rooms[roomId];
 const findRoomByUser = ({ id }) =>
   find(rooms, (room) => room.userIds.some((userId) => userId === id));
-const findRoomByKey = (roomKey) => find(rooms, (room) => room.key === roomKey);
+const findRoomByKey = (roomKey) =>
+  find(rooms, (room) => room.key === toLower(roomKey));
 
 const addUserToRoom = (roomId, user) => {
   const room = findRoomById(roomId);

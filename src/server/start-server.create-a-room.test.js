@@ -44,7 +44,6 @@ describe("startServer", () => {
     const responseJson = await response.json();
 
     // Assert response contains the room key
-    expect(responseJson.roomKey).toHaveLength(6);
     expect(responseJson.roomKey).toMatch(/\w*/);
 
     // Assert a room has been created

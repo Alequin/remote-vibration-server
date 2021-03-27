@@ -14,6 +14,7 @@ const startServer = require("./start-server");
 const rooms = require("../persistance/rooms");
 const { connectedUsersList } = require("../websocket/connected-users");
 const messageTypes = require("../websocket/on-user-start-connection/message-types");
+const { toUpper } = require("lodash");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -41,6 +42,36 @@ describe("startServer", () => {
           JSON.stringify({
             type: messageTypes.connectToRoom,
             data: { roomKey: testRoom.key },
+          }),
+          resolve
+        );
+      });
+      client.on("connectFailed", reject);
+    });
+
+    client.connect(`ws://localhost:${testPort}`);
+    await connectToRoomAndSendMessage;
+
+    await waitFor(() => {
+      // Assert only the current user is connected at the time of the test
+      expect(connectedUsersList.count()).toBe(1);
+
+      // Assert the user has been added to the expected room
+      expect(rooms.findRoomById(testRoom.id).userIds).toHaveLength(1);
+    });
+  });
+
+  it("allows a user to connect to a room with a upper case version of the room key", async () => {
+    const testRoom = rooms.createRoom("123");
+
+    const client = new WebSocketClient();
+
+    const connectToRoomAndSendMessage = new Promise((resolve, reject) => {
+      client.on("connect", (connection) => {
+        connection.send(
+          JSON.stringify({
+            type: messageTypes.connectToRoom,
+            data: { roomKey: testRoom.key.toUpperCase() },
           }),
           resolve
         );
