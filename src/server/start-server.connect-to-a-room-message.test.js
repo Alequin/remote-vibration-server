@@ -8,13 +8,12 @@ jest.mock(
   () => ({ checkRoomsInterval: () => 2000 })
 );
 
-var { client: WebSocketClient, w3cwebsocket } = require("websocket");
+var { client: WebSocketClient } = require("websocket");
 const { default: waitFor } = require("wait-for-expect");
 const startServer = require("./start-server");
 const rooms = require("../persistance/rooms");
 const { connectedUsersList } = require("../websocket/connected-users");
 const messageTypes = require("../websocket/on-user-start-connection/message-types");
-const { toUpper } = require("lodash");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -31,13 +30,29 @@ describe("startServer", () => {
     await server.closeServers();
   });
 
-  it("allows a user to connect to a room", async () => {
+  it("allows a user to connect to a room", async (done) => {
     const testRoom = rooms.createRoom("123");
 
     const client = new WebSocketClient();
 
     const connectToRoomAndSendMessage = new Promise((resolve, reject) => {
       client.on("connect", (connection) => {
+        connection.on("message", async (message) => {
+          await waitFor(() => {
+            // 1. Assert only the current user is connected at the time of the test
+            expect(connectedUsersList.count()).toBe(1);
+
+            // 2. Assert the user has been added to the expected room
+            expect(rooms.findRoomById(testRoom.id).userIds).toHaveLength(1);
+
+            // 3. Assert an message is sent to confirm the room connection
+            expect(JSON.parse(message.utf8Data).type).toBe(
+              messageTypes.confirmRoomConnection
+            );
+          });
+          done();
+        });
+
         connection.send(
           JSON.stringify({
             type: messageTypes.connectToRoom,
@@ -51,14 +66,6 @@ describe("startServer", () => {
 
     client.connect(`ws://localhost:${testPort}`);
     await connectToRoomAndSendMessage;
-
-    await waitFor(() => {
-      // Assert only the current user is connected at the time of the test
-      expect(connectedUsersList.count()).toBe(1);
-
-      // Assert the user has been added to the expected room
-      expect(rooms.findRoomById(testRoom.id).userIds).toHaveLength(1);
-    });
   });
 
   it("allows a user to connect to a room with a upper case version of the room key", async () => {
