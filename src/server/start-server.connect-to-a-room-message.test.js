@@ -137,7 +137,7 @@ describe("startServer", () => {
         connection.on("message", (message) => {
           // 1. Assert an error message is returned
           expect(JSON.parse(message.utf8Data).error).toBe(
-            "There is no room for the give key"
+            "There is no room for the given key"
           );
           resolve();
         });

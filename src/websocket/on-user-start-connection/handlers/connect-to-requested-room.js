@@ -5,7 +5,7 @@ const connectToRequestedRoom = (user, { data: { roomKey } }) => {
   // TODO validate roomKey chars do not include anything invalid
   const roomToAddUserTo = rooms.findRoomByKey(roomKey);
   if (!roomToAddUserTo) {
-    return sendErrorMessageToUser(user, "There is no room for the give key");
+    return sendErrorMessageToUser(user, "There is no room for the given key");
   }
 
   rooms.addUserToRoom(roomToAddUserTo.id, user);
