@@ -1,0 +1,12 @@
+version: "3.7"
+services:
+  postgres:
+    image: postgres # Use the latest
+    restart: always
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5438:5432" # Expose psql on port 5438
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
