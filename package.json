@@ -7,7 +7,10 @@
     "test": "cross-env NODE_ENV=test jest",
     "start": "cross-env NODE_ENV=local node ./start",
     "start:live": "cross-env NODE_ENV=production node ./start",
-    "start-local-database": "docker-compose down && docker-compose up -d"
+    "start-local-database": "docker-compose down && docker-compose up -d",
+    "create-local-database": "cross-env NODE_ENV=local node ./script/create-database.js",
+    "drop-local-database": "cross-env NODE_ENV=local node ./script/drop-database.js",
+    "truncate-local-database": "cross-env NODE_ENV=local node ./script/truncate-database-tables.js"
   },
   "keywords": [],
   "author": "",
