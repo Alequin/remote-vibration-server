@@ -10,7 +10,6 @@ const processMessage = (currentUser, message) => {
 
 const messageHandlers = {
   [messageTypes.connectToRoom]: require("./handlers/connect-to-requested-room"),
-  [messageTypes.sendMessage]: require("./handlers/send-message"),
   [messageTypes.sendVibrationPattern]: require("./handlers/send-vibration-pattern"),
 };
 

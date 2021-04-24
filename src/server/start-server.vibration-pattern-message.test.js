@@ -48,15 +48,26 @@ describe("startServer", () => {
         );
 
         connection.on("message", (message) => {
-          // 4. Assert client1 receives client2's vibration pattern
-          expect(JSON.parse(message.utf8Data)).toEqual({
-            type: messageTypes.receivedVibrationPattern,
-            data: {
-              vibrationPattern: mockVibrationPatternObject,
-              speed: 1,
-            },
-          });
-          done();
+          const parsedMessage = JSON.parse(message.utf8Data);
+
+          // 2. Confirm room connection
+          if (parsedMessage.type === messageTypes.confirmRoomConnection) {
+            expect(parsedMessage).toEqual({
+              type: messageTypes.confirmRoomConnection,
+            });
+          }
+
+          // 5. Assert client1 receives client2's vibration pattern
+          if (parsedMessage.type === messageTypes.receivedVibrationPattern) {
+            expect(parsedMessage).toEqual({
+              type: messageTypes.receivedVibrationPattern,
+              data: {
+                vibrationPattern: mockVibrationPatternObject,
+                speed: 1,
+              },
+            });
+            done();
+          }
         });
       });
       client1.on("connectFailed", reject);
@@ -67,7 +78,7 @@ describe("startServer", () => {
 
     const client2 = new WebSocketClient();
 
-    // 2. Connect second user
+    // 3. Connect second user
     let client2Connection = null;
     const connectToRoomAndSendMessage2 = new Promise((resolve, reject) => {
       client2.on("connect", (connection) => {
@@ -86,7 +97,7 @@ describe("startServer", () => {
     client2.connect(`ws://localhost:${testPort}`);
     await connectToRoomAndSendMessage2;
 
-    // 3. Send a vibration pattern to the room from second user
+    // 4. Send a vibration pattern to the room from second user
     client2Connection.send(
       JSON.stringify({
         type: messageTypes.sendVibrationPattern,
@@ -118,15 +129,26 @@ describe("startServer", () => {
         );
 
         connection.on("message", (message) => {
-          // 5. Assert client1 receives client3's message
-          expect(JSON.parse(message.utf8Data)).toEqual({
-            type: messageTypes.receivedVibrationPattern,
-            data: {
-              vibrationPattern: mockVibrationPatternObject,
-              speed: 1,
-            },
-          });
-          done();
+          const parsedMessage = JSON.parse(message.utf8Data);
+
+          // 2. Confirm room connection
+          if (parsedMessage.type === messageTypes.confirmRoomConnection) {
+            expect(parsedMessage).toEqual({
+              type: messageTypes.confirmRoomConnection,
+            });
+          }
+
+          // 7. Assert client1 receives client3's message
+          if (parsedMessage.type === messageTypes.receivedVibrationPattern) {
+            expect(parsedMessage).toEqual({
+              type: messageTypes.receivedVibrationPattern,
+              data: {
+                vibrationPattern: mockVibrationPatternObject,
+                speed: 1,
+              },
+            });
+            done();
+          }
         });
       });
       client1.on("connectFailed", reject);
@@ -137,7 +159,7 @@ describe("startServer", () => {
 
     const client2 = new WebSocketClient();
 
-    // 2. Connect second user to 'otherTestRoom' and wait for a message that will not arrive
+    // 3. Connect second user to 'otherTestRoom'
     const connectToRoom2 = new Promise((resolve, reject) => {
       client2.on("connect", (connection) => {
         connection.send(
@@ -148,9 +170,18 @@ describe("startServer", () => {
           resolve
         );
         connection.on("message", (message) => {
-          throw Error(
-            `Client 2 should not get a message but received ${message}`
-          );
+          const parsedMessage = JSON.parse(message.utf8Data);
+          if (parsedMessage.type === messageTypes.confirmRoomConnection) {
+            // 4. Confirm room connection
+            expect(parsedMessage).toEqual({
+              type: messageTypes.confirmRoomConnection,
+            });
+          } else {
+            // Error if any other messages are received
+            throw Error(
+              `Client 2 should not get a message but received ${message.utf8Data}`
+            );
+          }
         });
       });
       client2.on("connectFailed", reject);
@@ -161,7 +192,7 @@ describe("startServer", () => {
 
     const client3 = new WebSocketClient();
     let client3Connection = null;
-    // 3. Connect third user to 'testRoom' and send a message
+    // 5. Connect third user to 'testRoom' and send a message
     const connectToRoomAndSendMessage3 = new Promise((resolve, reject) => {
       client3.on("connect", (connection) => {
         connection.send(
@@ -179,7 +210,7 @@ describe("startServer", () => {
     client3.connect(`ws://localhost:${testPort}`);
     await connectToRoomAndSendMessage3;
 
-    // 4. Send a message to the room from third user
+    // 6. Send a message to the room from third user
     client3Connection.send(
       JSON.stringify({
         type: messageTypes.sendVibrationPattern,
@@ -191,7 +222,7 @@ describe("startServer", () => {
     );
 
     await waitFor(() => {
-      // 6. Assert all the rooms have the expected number of users
+      // 8. Assert all the rooms have the expected number of users
       expect(rooms.findRoomById(testRoom.id).userIds).toHaveLength(2);
       expect(rooms.findRoomById(otherTestRoom.id).userIds).toHaveLength(1);
     });
@@ -203,7 +234,7 @@ describe("startServer", () => {
     const testRoom = rooms.createRoom("123");
 
     const client2 = new WebSocketClient();
-    // 2. Connect second user
+    // 1. Connect second user
     let client2Connection = null;
     const connectToRoomAndSendMessage2 = new Promise((resolve, reject) => {
       client2.on("connect", (connection) => {
@@ -223,11 +254,22 @@ describe("startServer", () => {
     await connectToRoomAndSendMessage2;
 
     client2Connection.on("message", (message) => {
+      const parsedMessage = JSON.parse(message.utf8Data);
+
+      // 2. Confirm room connection
+      if (parsedMessage.type === messageTypes.confirmRoomConnection) {
+        expect(parsedMessage).toEqual({
+          type: messageTypes.confirmRoomConnection,
+        });
+      }
+
       // 4. Assert an error message is returned to the client
-      expect(JSON.parse(message.utf8Data)).toEqual({
-        error: "sendVibrationPattern: Invalid properties provided",
-      });
-      done();
+      if (parsedMessage.error) {
+        expect(JSON.parse(message.utf8Data)).toEqual({
+          error: "sendVibrationPattern: Invalid properties provided",
+        });
+        done();
+      }
     });
 
     // 3. Send a vibration pattern but include some bad data
@@ -247,7 +289,7 @@ describe("startServer", () => {
     const testRoom = rooms.createRoom("123");
 
     const client2 = new WebSocketClient();
-    // 2. Connect second user
+    // 1. Connect second user
     let client2Connection = null;
     const connectToRoomAndSendMessage2 = new Promise((resolve, reject) => {
       client2.on("connect", (connection) => {
@@ -267,11 +309,22 @@ describe("startServer", () => {
     await connectToRoomAndSendMessage2;
 
     client2Connection.on("message", (message) => {
+      const parsedMessage = JSON.parse(message.utf8Data);
+
+      // 2. Confirm room connection
+      if (parsedMessage.type === messageTypes.confirmRoomConnection) {
+        expect(parsedMessage).toEqual({
+          type: messageTypes.confirmRoomConnection,
+        });
+      }
+
       // 4. Assert an error message is returned to the client
-      expect(JSON.parse(message.utf8Data)).toEqual({
-        error: "sendVibrationPattern: Missing properties",
-      });
-      done();
+      if (parsedMessage.error) {
+        expect(parsedMessage).toEqual({
+          error: "sendVibrationPattern: Missing properties",
+        });
+        done();
+      }
     });
 
     // 3. Send a vibration pattern but include some bad data
@@ -291,7 +344,7 @@ describe("startServer", () => {
     const testRoom = rooms.createRoom("123");
 
     const client2 = new WebSocketClient();
-    // 2. Connect second user
+    // 1. Connect second user
     let client2Connection = null;
     const connectToRoomAndSendMessage2 = new Promise((resolve, reject) => {
       client2.on("connect", (connection) => {
@@ -311,11 +364,22 @@ describe("startServer", () => {
     await connectToRoomAndSendMessage2;
 
     client2Connection.on("message", (message) => {
+      const parsedMessage = JSON.parse(message.utf8Data);
+
+      // 2. Confirm room connection
+      if (parsedMessage.type === messageTypes.confirmRoomConnection) {
+        expect(parsedMessage).toEqual({
+          type: messageTypes.confirmRoomConnection,
+        });
+      }
+
       // 4. Assert an error message is returned to the client
-      expect(JSON.parse(message.utf8Data)).toEqual({
-        error: "sendVibrationPattern: Missing properties",
-      });
-      done();
+      if (parsedMessage.error) {
+        expect(parsedMessage).toEqual({
+          error: "sendVibrationPattern: Missing properties",
+        });
+        done();
+      }
     });
 
     // 3. Send a vibration pattern but include some bad data
@@ -356,13 +420,25 @@ describe("startServer", () => {
     await connectToRoomAndSendMessage2;
 
     clientConnection.on("message", (message) => {
-      // 3. Assert a confirmation message was received after sending the vibration
       const parsedMessage = JSON.parse(message.utf8Data);
-      expect(parsedMessage.type).toBe(messageTypes.confirmVibrationPatternSent);
-      done();
+
+      // 2. Confirm room connection
+      if (parsedMessage.type === messageTypes.confirmRoomConnection) {
+        expect(parsedMessage).toEqual({
+          type: messageTypes.confirmRoomConnection,
+        });
+      }
+
+      // 4. Assert a confirmation message was received after sending the vibration
+      if (parsedMessage.type === messageTypes.confirmVibrationPatternSent) {
+        expect(parsedMessage).toEqual({
+          type: messageTypes.confirmVibrationPatternSent,
+        });
+        done();
+      }
     });
 
-    // 2. Send a vibration pattern to the room
+    // 3. Send a vibration pattern to the room
     clientConnection.send(
       JSON.stringify({
         type: messageTypes.sendVibrationPattern,
