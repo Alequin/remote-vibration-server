@@ -10,11 +10,14 @@ const setupConfig = () => {
   validateEnvironmentVariables();
 
   const currentEnvironment = process.env.NODE_ENV;
+  const connectionString = process.env.DATABASE_URL;
+
   return {
     isEnvTest: () => currentEnvironment === validEnvironmentOptions.test,
     isEnvLocal: () => currentEnvironment === validEnvironmentOptions.local,
     isEnvProduction: () =>
       currentEnvironment === validEnvironmentOptions.production,
+    connectionString,
   };
 };
 

@@ -6,12 +6,13 @@
   "scripts": {
     "test": "cross-env NODE_ENV=test jest --forceExit --runInBand",
     "start": "cross-env NODE_ENV=local node ./start",
-    "start:live": "cross-env NODE_ENV=production node ./start",
+    "start:live": "cross-env NODE_ENV=production npm run create-production-database && node ./start",
     "start-local-database": "docker-compose down && docker-compose up -d",
     "create-local-database": "cross-env NODE_ENV=local node ./script/create-database.js",
     "drop-local-database": "cross-env NODE_ENV=local node ./script/drop-database.js",
     "recreate-local-database": "npm run drop-local-database && npm run create-local-database",
-    "truncate-local-database": "cross-env NODE_ENV=local node ./script/truncate-database-tables.js"
+    "truncate-local-database": "cross-env NODE_ENV=local node ./script/truncate-database-tables.js",
+    "create-production-database": "cross-env NODE_ENV=production node ./script/create-database.js"
   },
   "keywords": [],
   "author": "",

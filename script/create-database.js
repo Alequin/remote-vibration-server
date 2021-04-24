@@ -4,24 +4,25 @@ const doesDatabaseExist = require("../src/persistance/queries/does-database-exis
 
 const createDatabase = async () => {
   const databaseName = currentDatabaseName();
-  await prepareDatabaseForTableCreation(databaseName);
+
+  // Create a connection without a target database
+  await database.connect();
+
+  if (await doesDatabaseExist(databaseName)) {
+    console.log(`Database already exists / databaseName: ${databaseName}`);
+    console.log("No action was taken");
+    return;
+  }
+
+  await database.query(`CREATE DATABASE ${databaseName}`);
+
+  // Reconnect to the target database
+  await database.disconnect();
+  await database.connect(databaseName);
 
   await createDatabaseTables(databaseName);
 
   await database.disconnect();
-};
-
-const prepareDatabaseForTableCreation = async (databaseName) => {
-  // Create a connection without a target database
-  await database.connect();
-
-  if (await doesDatabaseExist(databaseName))
-    throw new Error(`Database already exists / databaseName: ${databaseName}`);
-
-  await database.query(`CREATE DATABASE ${databaseName}`);
-  // Reconnect to the target database
-  await database.disconnect();
-  await database.connect(databaseName);
 };
 
 const createDatabaseTables = async (databaseName) => {

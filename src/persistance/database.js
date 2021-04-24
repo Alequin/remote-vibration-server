@@ -44,7 +44,10 @@ const databaseConfig = (databaseName) => {
       port: 5438,
     };
 
-  if (environment.isEnvProduction()) return {};
+  if (environment.isEnvProduction())
+    return {
+      connectionString: environment.connectionString,
+    };
 };
 
 module.exports = setupDatabaseInterface();
