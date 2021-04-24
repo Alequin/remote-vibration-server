@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "cross-env NODE_ENV=test jest",
+    "test": "cross-env NODE_ENV=test jest --forceExit --runInBand",
     "start": "cross-env NODE_ENV=local node ./start",
     "start:live": "cross-env NODE_ENV=production node ./start",
     "start-local-database": "docker-compose down && docker-compose up -d",

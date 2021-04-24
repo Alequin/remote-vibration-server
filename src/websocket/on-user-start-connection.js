@@ -5,9 +5,9 @@ const onUserStartConnection = (wss, connectedUsersList) => {
   wss.on("connection", (client) => {
     const currentUser = connectedUsersList.addUser(client);
 
-    currentUser.client.on("message", (data) => {
+    currentUser.client.on("message", async (data) => {
       try {
-        processMessage(currentUser, JSON.parse(data));
+        await processMessage(currentUser, JSON.parse(data));
       } catch (error) {
         // TODO add error logging
       }

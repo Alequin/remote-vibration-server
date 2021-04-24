@@ -5,14 +5,16 @@ const createRoom = (app) => {
      - Should stop the same person from creating multiple rooms
   */
 
-  app.post("/room", (req, res) => {
+  app.post("/room", async (req, res) => {
     const creatorDeviceId = req.header("deviceId");
-    const previouslyCreatedRoom = rooms.findRoomByCreatorId(creatorDeviceId);
+    const previouslyCreatedRoom = await rooms.findRoomByCreatorId(
+      creatorDeviceId
+    );
     if (previouslyCreatedRoom)
-      return res.json({ roomKey: previouslyCreatedRoom.key });
+      return res.json({ password: previouslyCreatedRoom.password });
 
-    const { key } = rooms.createRoom(creatorDeviceId);
-    res.json({ roomKey: key });
+    const { password } = await rooms.createRoom(creatorDeviceId);
+    res.json({ password });
   });
 };
 

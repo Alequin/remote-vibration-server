@@ -1,7 +1,7 @@
 const { random } = require("lodash");
 
 const newRoomKey = () =>
-  `${randomElement(allWords)} ${randomElement(allWords)}`;
+  `${randomElement(allWords)} ${randomElement(allWords)}`.toLowerCase();
 
 const randomElement = (array) => array[random(0, array.length - 1)];
 

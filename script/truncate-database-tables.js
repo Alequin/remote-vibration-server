@@ -6,6 +6,8 @@ const truncateDatabaseTables = async () => {
   await database.connect(databaseName);
 
   await database.query(`TRUNCATE TABLE rooms`);
+
+  await database.disconnect();
 };
 
 if (require.main === module)

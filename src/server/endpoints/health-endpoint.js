@@ -8,7 +8,6 @@ const health = (app) => {
       JSON.stringify({
         status: "OK",
         totalConnectionUsers: connectedUsersList.count(),
-        totalOpenRooms: rooms.countOpenRooms(),
       })
     );
   });

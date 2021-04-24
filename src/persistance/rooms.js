@@ -1,35 +1,28 @@
-const { forEach, find, size, isNil, toLower } = require("lodash");
-const { v4: uuidv4 } = require("uuid");
+const { isNil, isEmpty } = require("lodash");
 const newRoomKey = require("./new-room-key");
 const assert = require("assert");
+const insertNewRoom = require("./queries/insert-new-room");
+const selectFromRooms = require("./queries/select-from-rooms");
+const updateRooms = require("./queries/update-rooms");
+const deleteFromRooms = require("./queries/delete-from-rooms");
 
-const rooms = {};
-
-const forEachRoom = (forASingleRoom) => forEach(rooms, forASingleRoom);
-
-const createRoom = (creatorDeviceId) => {
+const createRoom = async (creatorDeviceId) => {
   assert(!isNil(creatorDeviceId));
 
-  const room = {
-    id: uuidv4(),
-    key: newUniqueRoomKey(),
-    userIds: [],
+  return await insertNewRoom({
+    password: await newUniqueRoomKey(),
     creatorDeviceId,
-    lastValidCheckTime: new Date(),
-  };
-
-  rooms[room.id] = room;
-  return rooms[room.id];
+  });
 };
 
-const newUniqueRoomKey = () => {
+const newUniqueRoomKey = async () => {
   const keySize = 6;
   let keyToUse = newRoomKey({ size: keySize });
 
   // It's unlikely that a key will be a duplicate but just in case
   // check against other existing rooms and retry if it's not unique
   let attemptsToFindUniqueKey = 0;
-  while (findRoomByKey(keyToUse)) {
+  while (!isEmpty(await findRoomByKey(keyToUse))) {
     attemptsToFindUniqueKey++;
     if (attemptsToFindUniqueKey > 100) {
       throw new Error("Unable to create a unique room key");
@@ -41,31 +34,21 @@ const newUniqueRoomKey = () => {
   return keyToUse;
 };
 
-const findRoomById = (roomId) => rooms[roomId];
-const findRoomByUser = ({ id }) =>
-  find(rooms, (room) => room.userIds.some((userId) => userId === id));
-const findRoomByKey = (roomKey) =>
-  find(rooms, (room) => room.key === toLower(roomKey));
-
-const addUserToRoom = (roomId, user) => {
-  const room = findRoomById(roomId);
-  room.userIds.push(user.id);
-};
-
+const findRoomById = async (roomId) => selectFromRooms.byRoomId(roomId);
+const findRoomByUser = async ({ id }) => selectFromRooms.byUserId(id);
+const findRoomByKey = async (password) => selectFromRooms.byPassword(password);
 const findRoomByCreatorId = (creatorDeviceId) =>
-  find(rooms, (room) => room.creatorDeviceId === creatorDeviceId);
+  selectFromRooms.byCreatorId(creatorDeviceId);
 
-const countOpenRooms = () => size(rooms);
+const addUserToRoom = async (roomId, user) =>
+  updateRooms.addUserToRoom({ roomId, userIdToAdd: user.id });
+const removeUserFromAllRooms = async (user) =>
+  updateRooms.removeUserFromAllRooms(user.id);
+const markRoomsWithUsersAsActive = async () =>
+  updateRooms.updateLastActiveDateForRoomsWithUsers();
 
-const removeRoom = (roomId) => delete rooms[roomId];
-
-const removeUserFromAllRooms = (user) =>
-  forEachRoom(
-    (room) =>
-      (room.userIds = room.userIds.filter((userId) => userId !== user.id))
-  );
-
-const removeAllRooms = () => forEachRoom(({ id }) => removeRoom(id));
+const removeRoom = async (roomId) => deleteFromRooms.deleteRoomById(roomId);
+const removeAbandonedRooms = async () => deleteFromRooms.deleteAbandonedRooms();
 
 module.exports = {
   createRoom,
@@ -74,9 +57,8 @@ module.exports = {
   findRoomByKey,
   findRoomByCreatorId,
   addUserToRoom,
-  forEachRoom,
+  removeAbandonedRooms,
   removeRoom,
   removeUserFromAllRooms,
-  removeAllRooms,
-  countOpenRooms,
+  markRoomsWithUsersAsActive,
 };

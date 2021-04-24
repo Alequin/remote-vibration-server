@@ -6,11 +6,14 @@ const {
 } = require("../../connected-users");
 const messageTypes = require("../message-types");
 
-const sendVibrationPattern = (currentUser, message) => {
+const sendVibrationPattern = async (currentUser, message) => {
   validateMessage(currentUser, message);
 
-  const room = rooms.findRoomByUser(currentUser);
-  room.userIds.forEach((userId) => {
+  // TODO make sure only one room is returned
+
+  const [room] = await rooms.findRoomByUser(currentUser);
+
+  room.users_in_room.forEach((userId) => {
     const user = connectedUsersList.findUserById(userId);
     user.id === currentUser.id
       ? sendConfirmationToSender(user)

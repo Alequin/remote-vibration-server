@@ -14,6 +14,9 @@ const startServer = require("./start-server");
 const rooms = require("../persistance/rooms");
 const { connectedUsersList } = require("../websocket/connected-users");
 const messageTypes = require("../websocket/on-user-start-connection/message-types");
+const dropDatabase = require("../../script/drop-database");
+const createDatabase = require("../../script/create-database");
+const truncateDatabaseTables = require("../../script/truncate-database-tables");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -21,8 +24,15 @@ waitFor.defaults.interval = 1000;
 describe("startServer", () => {
   const testPort = 3002;
   let server = null;
+
+  beforeAll(async () => {
+    await dropDatabase();
+    await createDatabase();
+  });
+
   beforeEach(async () => {
-    rooms.removeAllRooms();
+    await truncateDatabaseTables();
+
     jest.clearAllMocks();
     server = await startServer({ port: testPort });
   });
@@ -30,33 +40,37 @@ describe("startServer", () => {
     await server.closeServers();
   });
 
+  afterAll(async () => {
+    await dropDatabase();
+  });
+
   it("allows a user to connect to a room", async (done) => {
-    const testRoom = rooms.createRoom("123");
+    const testRoom = await rooms.createRoom("123");
 
     const client = new WebSocketClient();
 
     const connectToRoomAndSendMessage = new Promise((resolve, reject) => {
       client.on("connect", (connection) => {
         connection.on("message", async (message) => {
-          await waitFor(() => {
-            // 1. Assert only the current user is connected at the time of the test
-            expect(connectedUsersList.count()).toBe(1);
+          // 1. Assert only the current user is connected at the time of the test
+          expect(connectedUsersList.count()).toBe(1);
 
-            // 2. Assert the user has been added to the expected room
-            expect(rooms.findRoomById(testRoom.id).userIds).toHaveLength(1);
+          // 2. Assert the user has been added to the expected room
+          expect(
+            (await rooms.findRoomById(testRoom.id)).users_in_room
+          ).toHaveLength(1);
 
-            // 3. Assert an message is sent to confirm the room connection
-            expect(JSON.parse(message.utf8Data).type).toBe(
-              messageTypes.confirmRoomConnection
-            );
-          });
+          // 3. Assert an message is sent to confirm the room connection
+          expect(JSON.parse(message.utf8Data).type).toBe(
+            messageTypes.confirmRoomConnection
+          );
           done();
         });
 
         connection.send(
           JSON.stringify({
             type: messageTypes.connectToRoom,
-            data: { roomKey: testRoom.key },
+            data: { password: testRoom.password },
           }),
           resolve
         );
@@ -69,7 +83,7 @@ describe("startServer", () => {
   });
 
   it("allows a user to connect to a room with a upper case version of the room key", async () => {
-    const testRoom = rooms.createRoom("123");
+    const testRoom = await rooms.createRoom("123");
 
     const client = new WebSocketClient();
 
@@ -78,10 +92,13 @@ describe("startServer", () => {
         connection.send(
           JSON.stringify({
             type: messageTypes.connectToRoom,
-            data: { roomKey: testRoom.key.toUpperCase() },
-          }),
-          resolve
+            data: { password: testRoom.password.toUpperCase() },
+          })
         );
+
+        connection.on("message", () => {
+          resolve();
+        });
       });
       client.on("connectFailed", reject);
     });
@@ -89,17 +106,19 @@ describe("startServer", () => {
     client.connect(`ws://localhost:${testPort}`);
     await connectToRoomAndSendMessage;
 
-    await waitFor(() => {
+    await waitFor(async () => {
       // Assert only the current user is connected at the time of the test
       expect(connectedUsersList.count()).toBe(1);
 
       // Assert the user has been added to the expected room
-      expect(rooms.findRoomById(testRoom.id).userIds).toHaveLength(1);
+      expect(
+        (await rooms.findRoomById(testRoom.id)).users_in_room
+      ).toHaveLength(1);
     });
   });
 
   it("allows multiple users to connect to a room", async () => {
-    const testRoom = rooms.createRoom("123");
+    const testRoom = await rooms.createRoom("123");
 
     for (const client of [new WebSocketClient(), new WebSocketClient()]) {
       const connectToRoomAndSendMessage = new Promise((resolve, reject) => {
@@ -107,11 +126,15 @@ describe("startServer", () => {
           connection.send(
             JSON.stringify({
               type: messageTypes.connectToRoom,
-              data: { roomKey: testRoom.key },
-            }),
-            resolve
+              data: { password: testRoom.password },
+            })
           );
+
+          connection.on("message", () => {
+            resolve();
+          });
         });
+
         client.on("connectFailed", reject);
       });
 
@@ -119,13 +142,13 @@ describe("startServer", () => {
       await connectToRoomAndSendMessage;
     }
 
-    await waitFor(() => {
-      // Assert only the 2 expected users are connected at the time of the test
-      expect(connectedUsersList.count()).toBe(2);
+    // Assert only the 2 expected users are connected at the time of the test
+    expect(connectedUsersList.count()).toBe(2);
 
-      // Assert the two users have been added to the expected room
-      expect(rooms.findRoomById(testRoom.id).userIds).toHaveLength(2);
-    });
+    // Assert the two users have been added to the expected room
+    expect((await rooms.findRoomById(testRoom.id)).users_in_room).toHaveLength(
+      2
+    );
   });
 
   it("returns an error if a user attempts to connect to a room that does not exist", async () => {
@@ -137,7 +160,7 @@ describe("startServer", () => {
           JSON.stringify({
             type: messageTypes.connectToRoom,
             // 1. Attempt to connect to a room with an invalid key
-            data: { roomKey: "bad room key" },
+            data: { password: "bad room key" },
           })
         );
 

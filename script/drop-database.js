@@ -1,11 +1,11 @@
 const currentDatabaseName = require("../src/persistance/current-database-name");
 const database = require("../src/persistance/database");
-const doesDatabaseExist = require("../src/persistance/does-database-exist");
+const doesDatabaseExist = require("../src/persistance/queries/does-database-exist");
 
 const dropDatabase = async () => {
   const databaseName = currentDatabaseName();
   await database.connect();
-  if (await doesDatabaseExist(databaseName)) return;
+  if (!(await doesDatabaseExist(databaseName))) return;
 
   await database.query(`DROP DATABASE ${databaseName}`);
   await database.disconnect();

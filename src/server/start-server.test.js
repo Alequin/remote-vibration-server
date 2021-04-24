@@ -8,15 +8,18 @@ jest.mock(
   () => ({ checkRoomsInterval: () => 2000 })
 );
 
+const createDatabase = require("../../script/create-database");
+const truncateDatabaseTables = require("../../script/truncate-database-tables");
+const dropDatabase = require("../../script/drop-database");
+
 const fetch = require("node-fetch");
 var { client: WebSocketClient, w3cwebsocket } = require("websocket");
 const { default: waitFor } = require("wait-for-expect");
 const connectedUsers = require("../websocket/connected-users");
 const startServer = require("./start-server");
 const rooms = require("../persistance/rooms");
-const { connectedUsersList } = require("../websocket/connected-users");
 const messageTypes = require("../websocket/on-user-start-connection/message-types");
-const toMilliseconds = require("../to-milliseconds");
+const database = require("../persistance/database");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -24,13 +27,24 @@ waitFor.defaults.interval = 1000;
 describe("startServer", () => {
   const testPort = 3005;
   let server = null;
+
+  beforeAll(async () => {
+    await dropDatabase();
+    await createDatabase();
+  });
+
   beforeEach(async () => {
-    rooms.removeAllRooms();
+    await truncateDatabaseTables();
+
     jest.clearAllMocks();
     server = await startServer({ port: testPort });
   });
   afterEach(async () => {
     await server.closeServers();
+  });
+
+  afterAll(async () => {
+    await dropDatabase();
   });
 
   it("can make a request to the health endpoint", async () => {
@@ -40,7 +54,7 @@ describe("startServer", () => {
       },
     });
     expect(await response.text()).toBe(
-      `{"status":"OK","totalConnectionUsers":0,"totalOpenRooms":0}`
+      `{"status":"OK","totalConnectionUsers":0}`
     );
   });
 
@@ -80,27 +94,37 @@ describe("startServer", () => {
   });
 
   it("removes users who are disconnected from the server from any rooms", async () => {
-    const testRoom = rooms.createRoom("123");
+    const mockRoomOwnerId = "123";
+    const testRoom = await rooms.createRoom(mockRoomOwnerId);
 
     const client = new w3cwebsocket(`ws://localhost:${testPort}`);
-
     const clientConnection = new Promise((resolve) => {
       client.onopen = () => {
         client.send(
           JSON.stringify({
             type: messageTypes.connectToRoom,
-            data: { roomKey: testRoom.key },
+            data: { password: testRoom.password },
           })
         );
-        resolve();
+      };
+
+      client.onmessage = (message) => {
+        const parsedMessage = JSON.parse(message.data);
+        if (parsedMessage.type === messageTypes.confirmRoomConnection) {
+          expect(parsedMessage.type === messageTypes.confirmRoomConnection);
+          resolve();
+        }
       };
     });
     await clientConnection;
 
-    await waitFor(() =>
+    await waitFor(async () => {
       // 1. Assert the user has connected to the room
-      expect(rooms.findRoomById(testRoom.id).userIds).toHaveLength(1)
-    );
+      const users_in_room = (await rooms.findRoomById(testRoom.id))
+        ?.users_in_room;
+
+      expect(users_in_room.length).toBe(1);
+    });
 
     // 2. close the clients connection
     const removeUserSpy = jest.spyOn(
@@ -113,25 +137,25 @@ describe("startServer", () => {
     await waitFor(() => expect(removeUserSpy).toHaveBeenCalledTimes(1));
 
     // 4. Assert the user is no longer in the testRoom
-    await waitFor(() =>
-      expect(rooms.findRoomById(testRoom.id).userIds).toHaveLength(0)
+    await waitFor(async () =>
+      expect((await rooms.findRoomById(testRoom.id)).users_in_room).toEqual([])
     );
   });
 
   it("removes room if it have been open for too long with no connected users", async () => {
-    const testRoom = rooms.createRoom("123");
+    const testRoom = await rooms.createRoom("123");
 
     // The room should exist
-    expect(rooms.findRoomById(testRoom.id)).toBeDefined();
+    expect(await rooms.findRoomById(testRoom.id)).toBeDefined();
 
     // Set time to twice the required period to be considered abandoned
-    testRoom.lastValidCheckTime = new Date(
-      Date.now() - toMilliseconds.minutes(60)
+    await database.query(
+      "UPDATE rooms SET last_active_date=NOW() - interval '35 minutes'"
     );
 
-    await waitFor(() =>
+    await waitFor(async () =>
       // After a period of time the room should be removed
-      expect(rooms.findRoomById(testRoom.id)).not.toBeDefined()
+      expect(await rooms.findRoomById(testRoom.id)).not.toBeDefined()
     );
   });
 
@@ -164,7 +188,7 @@ describe("startServer", () => {
       });
 
       client.on("connectFailed", () => {
-        console.log("connectFailed");
+        throw new Error("connection Failed");
       });
     });
 

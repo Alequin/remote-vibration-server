@@ -9,14 +9,12 @@ jest.mock(
 );
 
 const fetch = require("node-fetch");
-var { client: WebSocketClient, w3cwebsocket } = require("websocket");
 const { default: waitFor } = require("wait-for-expect");
-const connectedUsers = require("../websocket/connected-users");
 const startServer = require("./start-server");
 const rooms = require("../persistance/rooms");
-const { connectedUsersList } = require("../websocket/connected-users");
-const messageTypes = require("../websocket/on-user-start-connection/message-types");
-const toMilliseconds = require("../to-milliseconds");
+const dropDatabase = require("../../script/drop-database");
+const createDatabase = require("../../script/create-database");
+const truncateDatabaseTables = require("../../script/truncate-database-tables");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -24,13 +22,24 @@ waitFor.defaults.interval = 1000;
 describe("startServer", () => {
   const testPort = 3003;
   let server = null;
+
+  beforeAll(async () => {
+    await dropDatabase();
+    await createDatabase();
+  });
+
   beforeEach(async () => {
-    rooms.removeAllRooms();
+    await truncateDatabaseTables();
+
     jest.clearAllMocks();
     server = await startServer({ port: testPort });
   });
   afterEach(async () => {
     await server.closeServers();
+  });
+
+  afterAll(async () => {
+    await dropDatabase();
   });
 
   it("allows a user to create a room", async () => {
@@ -44,20 +53,20 @@ describe("startServer", () => {
     const responseJson = await response.json();
 
     // Assert response contains the room key
-    expect(responseJson.roomKey).toMatch(/\w*/);
+    expect(responseJson.password).toMatch(/\w*/);
 
     // Assert a room has been created
-    const createdRoom = rooms.findRoomByKey(responseJson.roomKey);
+    const createdRoom = await rooms.findRoomByKey(responseJson.password);
 
     expect(createdRoom.id).toBeDefined();
-    expect(createdRoom.key).toBe(responseJson.roomKey);
-    expect(createdRoom.userIds).toEqual([]);
-    expect(createdRoom.creatorDeviceId).toEqual("123");
+    expect(createdRoom.password).toBe(responseJson.password);
+    expect(createdRoom.users_in_room).toEqual([]);
+    expect(createdRoom.creator_id).toEqual("123");
   });
 
   it("does not create a new room if the user has a room associated with their device id", async () => {
     const deviceId = "123";
-    const testRoom = rooms.createRoom(deviceId);
+    const testRoom = await rooms.createRoom(deviceId);
 
     const response = await fetch(`http://localhost:${testPort}/room`, {
       method: "POST",
@@ -69,6 +78,6 @@ describe("startServer", () => {
     const responseJson = await response.json();
 
     // Returned room key should match the test rooms key
-    expect(responseJson.roomKey).toBe(testRoom.key);
+    expect(responseJson.password).toBe(testRoom.password);
   });
 });

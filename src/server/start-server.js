@@ -1,11 +1,15 @@
 const express = require("express");
+const currentDatabaseName = require("../persistance/current-database-name");
+const database = require("../persistance/database");
 const startWebsocketServer = require("../websocket/start-websocket-server");
 const healthEndpoint = require("./endpoints/health-endpoint");
 const roomEndpoints = require("./endpoints/room-endpoints");
 const confirmDeviceIdHeaderMiddleware = require("./middleware/confirm-device-id-header-middleware");
 
 const startServer = async ({ port }) =>
-  new Promise((resolve) => {
+  new Promise(async (resolve) => {
+    await database.connect(currentDatabaseName());
+
     const app = express();
 
     // parse application/json
@@ -30,7 +34,11 @@ const startServer = async ({ port }) =>
       resolve({
         expressServer: server,
         closeServers: async () =>
-          Promise.all([server.close(), webSocket.closeServer()]),
+          Promise.all([
+            server.close(),
+            webSocket.closeServer(),
+            database.disconnect(),
+          ]),
       });
     });
   });

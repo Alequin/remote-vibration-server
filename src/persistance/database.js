@@ -1,27 +1,30 @@
-const { Client } = require("pg");
+const { Pool } = require("pg");
 const environment = require("../environment");
 
 const setupDatabaseInterface = () => {
-  let client = null;
+  let pool = null;
 
   const connect = async (databaseName) => {
-    client = new Client(databaseConfig(databaseName));
-    return await client.connect();
+    pool = new Pool(databaseConfig(databaseName));
   };
 
   const query = async (query, variables) => {
-    if (!client)
+    if (!pool)
       throw new Error("Query Error: Client is not connected to database");
 
-    return await client.query(query, variables).then(({ rows }) => rows);
+    const client = await pool.connect();
+    const rows = await client.query(query, variables).then(({ rows }) => rows);
+    client.release();
+
+    return rows;
   };
 
   const disconnect = async () => {
-    if (!client)
+    if (!pool)
       throw new Error("Disconnect Error: Client is not connected to database");
 
-    await client.end();
-    client = null;
+    await pool.end();
+    pool = null;
   };
 
   return {
