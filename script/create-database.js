@@ -1,10 +1,21 @@
+const environment = require("../src/environment");
 const currentDatabaseName = require("../src/persistance/current-database-name");
 const database = require("../src/persistance/database");
 const doesDatabaseExist = require("../src/persistance/queries/does-database-exist");
 
 const createDatabase = async () => {
   const databaseName = currentDatabaseName();
+  if (!environment.isEnvProduction()) {
+    await setUpDatabaseLocally(databaseName);
+  }
+  await database.connect(databaseName);
 
+  await createDatabaseTables(databaseName);
+
+  await database.disconnect();
+};
+
+const setUpDatabaseLocally = async (databaseName) => {
   // Create a connection without a target database
   await database.connect();
 
@@ -18,18 +29,13 @@ const createDatabase = async () => {
 
   // Reconnect to the target database
   await database.disconnect();
-  await database.connect(databaseName);
-
-  await createDatabaseTables(databaseName);
-
-  await database.disconnect();
 };
 
 const createDatabaseTables = async (databaseName) => {
   await database.connect(databaseName);
 
   await database.query(`
-        CREATE TABLE rooms (
+        CREATE TABLE IF NOT EXISTS rooms (
             id SERIAL PRIMARY KEY,
             password TEXT UNIQUE NOT NULL,
             users_in_room TEXT [] DEFAULT ARRAY[]::TEXT[] NOT NULL,
@@ -39,7 +45,7 @@ const createDatabaseTables = async (databaseName) => {
     `);
 
   await database.query(`
-    CREATE INDEX idx_room_password ON rooms USING HASH (password);
+    CREATE INDEX IF NOT EXISTS idx_room_password ON rooms USING HASH (password);
     `);
 };
 

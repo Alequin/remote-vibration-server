@@ -47,6 +47,10 @@ const databaseConfig = (databaseName) => {
   if (environment.isEnvProduction())
     return {
       connectionString: environment.connectionString,
+      ssl: {
+        sslmode: "require",
+        rejectUnauthorized: false,
+      },
     };
 };
 
