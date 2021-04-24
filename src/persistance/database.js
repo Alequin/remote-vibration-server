@@ -1,12 +1,47 @@
 const { Client } = require("pg");
-const databaseConfig = require("./database-config");
-const client = new Client(databaseConfig);
+const environment = require("../environment");
 
-const connect = async () => client.connect();
+const setupDatabaseInterface = () => {
+  let client = null;
 
-const query = async (query, variables) =>
-  client.query(query, variables).then(({ rows }) => rows);
+  const connect = async (databaseName) => {
+    client = new Client(databaseConfig(databaseName));
+    return await client.connect();
+  };
 
-const disconnect = async () => client.end();
+  const query = async (query, variables) => {
+    if (!client)
+      throw new Error("Query Error: Client is not connected to database");
 
-module.exports = { connect, query, disconnect };
+    return await client.query(query, variables).then(({ rows }) => rows);
+  };
+
+  const disconnect = async () => {
+    if (!client)
+      throw new Error("Disconnect Error: Client is not connected to database");
+
+    await client.end();
+    client = null;
+  };
+
+  return {
+    connect,
+    query,
+    disconnect,
+  };
+};
+
+const databaseConfig = (databaseName) => {
+  if (environment.isEnvLocal() || environment.isEnvTest())
+    return {
+      database: databaseName,
+      user: "user",
+      host: "localhost",
+      password: "password",
+      port: 5438,
+    };
+
+  if (environment.isEnvProduction()) return {};
+};
+
+module.exports = setupDatabaseInterface();

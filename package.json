@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "test": "cross-env NODE_ENV=test jest",
     "start": "cross-env NODE_ENV=local node ./start",
     "start:live": "cross-env NODE_ENV=production node ./start",
-    "test": "jest"
+    "start-local-database": "docker-compose down && docker-compose up -d"
   },
   "keywords": [],
   "author": "",
