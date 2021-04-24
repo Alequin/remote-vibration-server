@@ -1,6 +1,6 @@
 const currentDatabaseName = require("../src/persistance/current-database-name");
 const database = require("../src/persistance/database");
-const doesDatabaseExist = require("../src/persistance/does-database-exist");
+const doesDatabaseExist = require("../src/persistance/queries/does-database-exist");
 
 const createDatabase = async () => {
   const databaseName = currentDatabaseName();
@@ -26,13 +26,13 @@ const createDatabaseTables = async (databaseName) => {
   await database.connect(databaseName);
 
   await database.query(`
-        CREATE TABLE rooms (
-            id SERIAL PRIMARY KEY,
-            key TEXT UNIQUE NOT NULL,
-            users_in_room TEXT [] NOT NULL,
-            creator_id TEXT NOT NULL,
-            last_active_date timestamp NOT NULL
-        );
+    CREATE TABLE rooms (
+        id SERIAL PRIMARY KEY,
+        key TEXT UNIQUE NOT NULL,
+        users_in_room TEXT [] NOT NULL,
+        creator_id TEXT NOT NULL,
+        last_active_date timestamp NOT NULL
+    );
     `);
 };
 
