@@ -4,8 +4,9 @@ const checkIfClientsAreAlive = require("./check-if-clients-are-alive");
 const onUserStartConnection = require("./on-user-start-connection");
 const checkIfRoomsAreAbandoned = require("./check-if-rooms-are-abandoned");
 const rooms = require("../persistance/rooms");
+const watchForNewMessagesToSend = require("./watch-for-new-message-to-send");
 
-const startServer = () => {
+const startServer = async () => {
   const server = new WebSocket.Server({
     noServer: true,
     // You should not use autoAcceptConnections for production
@@ -31,11 +32,14 @@ const startServer = () => {
   const aliveLoop = checkIfClientsAreAlive(server, connectedUsersList);
   const activeRoomsLoop = checkIfRoomsAreAbandoned(rooms);
 
+  const cleanUpNewMessageWatcher = await watchForNewMessagesToSend();
+
   return {
     server,
-    closeServer: () => {
+    closeServer: async () => {
       const onClose = new Promise((resolve) =>
         server.on("close", () => {
+          cleanUpNewMessageWatcher();
           connectedUsersList.removeAllUsers();
           aliveLoop.stop();
           activeRoomsLoop.stop();

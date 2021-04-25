@@ -1,10 +1,11 @@
 const rooms = require("../../../persistance/rooms");
+const messages = require("../../../persistance/messages");
 const {
-  connectedUsersList,
   sendMessageToUser,
   sendErrorMessageToUser,
 } = require("../../connected-users");
 const messageTypes = require("../message-types");
+const database = require("../../../persistance/database");
 
 const sendVibrationPattern = async (currentUser, message) => {
   validateMessage(currentUser, message);
@@ -13,12 +14,18 @@ const sendVibrationPattern = async (currentUser, message) => {
 
   const [room] = await rooms.findRoomByUser(currentUser);
 
-  room.users_in_room.forEach((userId) => {
-    const user = connectedUsersList.findUserById(userId);
-    user.id === currentUser.id
-      ? sendConfirmationToSender(user)
-      : sendVibrationToRecipients(user, message);
-  });
+  const messageToInsert = room.users_in_room
+    .filter((userId) => userId !== currentUser.id) // Ignore current user
+    .map((recipientId) => ({
+      roomId: room.id,
+      recipientId,
+      authorId: currentUser.id,
+      messageData: JSON.stringify(message.data),
+    }));
+
+  await messages.addNewMessages(messageToInsert);
+
+  sendConfirmationToSender(currentUser);
 };
 
 const validateMessage = (currentUser, message) => {
@@ -42,13 +49,6 @@ const areAnyPropsInvalid = (data) =>
 const areAnyRequiredPropsMissing = (data) => {
   const givenProperties = Object.keys(data);
   return !requiredProps.every((prop) => givenProperties.includes(prop));
-};
-
-const sendVibrationToRecipients = (user, { data }) => {
-  sendMessageToUser(user, {
-    type: messageTypes.receivedVibrationPattern,
-    data,
-  });
 };
 
 const sendConfirmationToSender = (user) => {

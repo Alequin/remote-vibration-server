@@ -23,6 +23,7 @@ const newConnectedUsersList = () => {
     return user;
   };
 
+  const allUserIds = () => Object.keys(connectedUsers);
   const findUserById = (userId) => connectedUsers[userId];
 
   const removeAllUsers = () => forEachUser(removeUser);
@@ -35,6 +36,7 @@ const newConnectedUsersList = () => {
     removeUser,
     removeAllUsers,
     findUserById,
+    allUserIds,
     count,
   };
 };

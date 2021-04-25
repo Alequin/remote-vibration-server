@@ -21,7 +21,6 @@ const setUpDatabaseLocally = async (databaseName) => {
 
   if (await doesDatabaseExist(databaseName)) {
     console.log(`Database already exists / databaseName: ${databaseName}`);
-    console.log("No action was taken");
     return;
   }
 
@@ -35,18 +34,26 @@ const createDatabaseTables = async (databaseName) => {
   await database.connect(databaseName);
 
   await database.query(`
-        CREATE TABLE IF NOT EXISTS rooms (
-            id SERIAL PRIMARY KEY,
-            password TEXT UNIQUE NOT NULL,
-            users_in_room TEXT [] DEFAULT ARRAY[]::TEXT[] NOT NULL,
-            creator_id TEXT NOT NULL,
-            last_active_date timestamp NOT NULL
-        );
-    `);
+    CREATE TABLE IF NOT EXISTS rooms (
+      id SERIAL PRIMARY KEY,
+      password TEXT UNIQUE NOT NULL,
+      users_in_room TEXT [] DEFAULT ARRAY[]::TEXT[] NOT NULL,
+      creator_id TEXT NOT NULL,
+      last_active_date timestamp NOT NULL
+    );`);
+
+  await database.query(
+    `CREATE INDEX IF NOT EXISTS idx_room_password ON rooms USING HASH (password);`
+  );
 
   await database.query(`
-    CREATE INDEX IF NOT EXISTS idx_room_password ON rooms USING HASH (password);
-    `);
+    CREATE TABLE IF NOT EXISTS messages (
+      id SERIAL PRIMARY KEY,
+      room_id INT8 NOT NULL,
+      recipient_user_id TEXT NOT NULL,
+      author_id TEXT NOT NULL,
+      message_data JSONB NOT NULL
+      );`);
 };
 
 if (require.main === module)

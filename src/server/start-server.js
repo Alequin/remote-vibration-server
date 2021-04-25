@@ -20,7 +20,7 @@ const startServer = async ({ port }) =>
     healthEndpoint(app);
     roomEndpoints.createRoom(app);
 
-    const webSocket = startWebsocketServer();
+    const webSocket = await startWebsocketServer();
 
     // `server` is a vanilla Node.js HTTP server, so use
     // the same ws upgrade process described here:
@@ -33,12 +33,14 @@ const startServer = async ({ port }) =>
       });
       resolve({
         expressServer: server,
-        closeServers: async () =>
-          Promise.all([
-            server.close(),
-            webSocket.closeServer(),
-            database.disconnect(),
-          ]),
+        closeServers: async () => {
+          // Close websocket connections first
+          await webSocket.closeServer();
+          // Close primary server
+          await server.close();
+          // Close database after everything else has stopped
+          await database.disconnect();
+        },
       });
     });
   });

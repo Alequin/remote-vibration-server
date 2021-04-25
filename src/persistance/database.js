@@ -19,6 +19,15 @@ const setupDatabaseInterface = () => {
     return rows;
   };
 
+  const onNotification = async (callback) => {
+    if (!pool)
+      throw new Error("Query Error: Client is not connected to database");
+
+    const client = await pool.connect();
+    client.on("notification", callback);
+    return () => client.release();
+  };
+
   const disconnect = async () => {
     if (!pool)
       throw new Error("Disconnect Error: Client is not connected to database");
@@ -30,6 +39,7 @@ const setupDatabaseInterface = () => {
   return {
     connect,
     query,
+    onNotification,
     disconnect,
   };
 };

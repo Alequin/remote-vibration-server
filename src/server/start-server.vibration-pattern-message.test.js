@@ -16,6 +16,7 @@ const messageTypes = require("../websocket/on-user-start-connection/message-type
 const dropDatabase = require("../../script/drop-database");
 const createDatabase = require("../../script/create-database");
 const truncateDatabaseTables = require("../../script/truncate-database-tables");
+const database = require("../persistance/database");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -119,6 +120,86 @@ describe("startServer", () => {
     await connectToRoomAndSendMessage2;
 
     // 4. Send a vibration pattern to the room from second user
+    client2Connection.send(
+      JSON.stringify({
+        type: messageTypes.sendVibrationPattern,
+        data: {
+          vibrationPattern: mockVibrationPatternObject,
+          speed: 1,
+        },
+      })
+    );
+  });
+
+  it("Once vibration patterns have been sent all message will be removed from the database", async (done) => {
+    const mockVibrationPatternObject = { pattern: [] };
+
+    const testRoom = await rooms.createRoom("123");
+
+    const client1 = new WebSocketClient();
+
+    // 1. Connect first user and wait for the message to arrive
+    const connectToRoom1 = new Promise((resolve, reject) => {
+      client1.on("connect", (connection) => {
+        connection.send(
+          JSON.stringify({
+            type: messageTypes.connectToRoom,
+            data: { password: testRoom.password },
+          }),
+          resolve
+        );
+
+        connection.on("message", async (message) => {
+          const parsedMessage = JSON.parse(message.utf8Data);
+
+          // 4. Assert client1 receives client2's vibration pattern
+          if (parsedMessage.type === messageTypes.receivedVibrationPattern) {
+            await waitFor(
+              async () =>
+                expect(await database.query("SELECT * FROM messages")).toEqual(
+                  []
+                ),
+              { interval: 500 }
+            );
+            done();
+          }
+        });
+      });
+      client1.on("connectFailed", reject);
+    });
+
+    client1.connect(`ws://localhost:${testPort}`);
+    await connectToRoom1;
+
+    const client2 = new WebSocketClient();
+
+    // 2. Connect second user
+    let client2Connection = null;
+    const connectToRoomAndSendMessage2 = new Promise((resolve, reject) => {
+      client2.on("connect", (connection) => {
+        connection.send(
+          JSON.stringify({
+            type: messageTypes.connectToRoom,
+            data: { password: testRoom.password },
+          })
+        );
+
+        connection.on("message", (message) => {
+          const parsedMessage = JSON.parse(message.utf8Data);
+          if (parsedMessage.type === messageTypes.confirmRoomConnection) {
+            resolve();
+          }
+        });
+
+        client2Connection = connection;
+      });
+      client2.on("connectFailed", reject);
+    });
+
+    client2.connect(`ws://localhost:${testPort}`);
+    await connectToRoomAndSendMessage2;
+
+    // 3. Send a vibration pattern to the room from second user
     client2Connection.send(
       JSON.stringify({
         type: messageTypes.sendVibrationPattern,
