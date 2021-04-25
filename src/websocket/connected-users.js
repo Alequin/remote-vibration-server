@@ -4,7 +4,9 @@ const { v4: uuidv4 } = require("uuid");
 const newConnectedUsersList = () => {
   const connectedUsers = {};
 
-  const forEachUser = (forSingleUser) => forEach(connectedUsers, forSingleUser);
+  const forEachUser = async (forSingleUser) => {
+    for (const user of connectedUsers) await forSingleUser(user);
+  };
 
   const addUser = (client) => {
     const user = {

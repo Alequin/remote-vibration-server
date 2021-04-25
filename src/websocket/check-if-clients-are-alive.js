@@ -5,8 +5,8 @@ const disconnectInactiveUsers = require("./check-if-clients-are-alive/disconnect
 const pingActiveUsers = require("./check-if-clients-are-alive/ping-active-users");
 
 const checkIfClientsAreAlive = (wss, connectedUsersList) => {
-  const pingInterval = setInterval(() => {
-    connectedUsersList.forEachUser((user) =>
+  const pingInterval = setInterval(async () => {
+    await connectedUsersList.forEachUser(async (user) =>
       disconnectInactiveUsers(wss, connectedUsersList, user)
     );
     connectedUsersList.forEachUser((user) => pingActiveUsers(user));

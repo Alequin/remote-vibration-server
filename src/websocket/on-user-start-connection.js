@@ -14,6 +14,7 @@ const onUserStartConnection = (wss, connectedUsersList) => {
     });
 
     currentUser.client.on("pong", () => {
+      console.log("pong: ", currentUser.id);
       connectedUsers.setReceivedPongStatus(currentUser, true);
     });
   });

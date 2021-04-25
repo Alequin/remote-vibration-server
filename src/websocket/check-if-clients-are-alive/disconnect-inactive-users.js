@@ -1,9 +1,9 @@
 const { removeUserFromAllRooms } = require("../../persistance/rooms");
 const connectedUsers = require("../connected-users");
 
-const disconnectInactiveUsers = (wss, connectedUsersList, user) => {
+const disconnectInactiveUsers = async (wss, connectedUsersList, user) => {
   if (isUserInactive(wss, connectedUsers, user))
-    disconnect(connectedUsersList, user);
+    await disconnect(connectedUsersList, user);
 };
 
 const isUserInactive = (wss, connectedUsers, user) => {
@@ -12,9 +12,9 @@ const isUserInactive = (wss, connectedUsers, user) => {
   return hasUserDisconnected || hasFailedToReceivedPong;
 };
 
-const disconnect = (connectedUsersList, user) => {
+const disconnect = async (connectedUsersList, user) => {
   connectedUsersList.removeUser(user);
-  removeUserFromAllRooms(user);
+  await removeUserFromAllRooms(user);
 };
 
 module.exports = disconnectInactiveUsers;
