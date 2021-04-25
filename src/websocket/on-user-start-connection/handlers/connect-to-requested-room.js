@@ -18,7 +18,9 @@ const connectToRequestedRoom = async (user, { data: { password } }) => {
     return sendErrorMessageToUser(user, "There is no room for the given key");
   }
 
+  await rooms.removeUserFromAllRooms(user);
   await rooms.addUserToRoom(roomToAddUserTo.id, user);
+
   sendMessageToUser(user, { type: messageTypes.confirmRoomConnection });
 };
 

@@ -178,4 +178,8 @@ describe("startServer", () => {
     client.connect(`ws://localhost:${testPort}`);
     await connectToRoomAndSendMessage;
   });
+
+  it.todo(
+    "removes a user from their currently connect room if they try to connect to a different room"
+  );
 });
