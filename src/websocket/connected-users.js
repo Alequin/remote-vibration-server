@@ -5,7 +5,7 @@ const newConnectedUsersList = () => {
   const connectedUsers = {};
 
   const forEachUser = async (forSingleUser) => {
-    for (const user of connectedUsers) await forSingleUser(user);
+    for (const user of Object.values(connectedUsers)) await forSingleUser(user);
   };
 
   const addUser = (client) => {

@@ -4,6 +4,7 @@ const processMessage = require("./on-user-start-connection/process-message");
 const onUserStartConnection = (wss, connectedUsersList) => {
   wss.on("connection", (client) => {
     const currentUser = connectedUsersList.addUser(client);
+    console.log("user connected: ", currentUser.id);
 
     currentUser.client.on("message", async (data) => {
       try {
