@@ -356,6 +356,102 @@ describe("startServer", () => {
     });
   });
 
+  it("sends the expected number of messages when there is a short delay between multiple messages", async () => {
+    const mockVibrationPatternObject = { pattern: [] };
+
+    const testRoom = await rooms.createRoom("123");
+
+    const client1 = new WebSocketClient();
+    let totalVibrationsPatternsReceived = 0;
+
+    // 1. Connect first user and wait for the message to arrive
+    const connectToRoom1 = new Promise((resolve, reject) => {
+      client1.on("connect", (connection) => {
+        connection.send(
+          JSON.stringify({
+            type: messageTypes.connectToRoom,
+            data: { password: testRoom.password },
+          }),
+          resolve
+        );
+
+        connection.on("message", (message) => {
+          const parsedMessage = JSON.parse(message.utf8Data);
+
+          // 2. Confirm room connection
+          if (parsedMessage.type === messageTypes.confirmRoomConnection) {
+            expect(parsedMessage).toEqual({
+              type: messageTypes.confirmRoomConnection,
+            });
+          }
+
+          // 5. Assert client1 receives client2's vibration pattern
+          if (parsedMessage.type === messageTypes.receivedVibrationPattern) {
+            expect(parsedMessage).toEqual({
+              type: messageTypes.receivedVibrationPattern,
+              data: {
+                vibrationPattern: mockVibrationPatternObject,
+                speed: 1,
+              },
+            });
+            totalVibrationsPatternsReceived++;
+          }
+        });
+      });
+      client1.on("connectFailed", reject);
+    });
+
+    client1.connect(`ws://localhost:${testPort}`);
+    await connectToRoom1;
+
+    const client2 = new WebSocketClient();
+
+    // 3. Connect second user
+    let client2Connection = null;
+    const connectToRoomAndSendMessage2 = new Promise((resolve, reject) => {
+      client2.on("connect", (connection) => {
+        connection.send(
+          JSON.stringify({
+            type: messageTypes.connectToRoom,
+            data: { password: testRoom.password },
+          })
+        );
+
+        connection.on("message", (message) => {
+          const parsedMessage = JSON.parse(message.utf8Data);
+          if (parsedMessage.type === messageTypes.confirmRoomConnection) {
+            resolve();
+          }
+        });
+
+        client2Connection = connection;
+      });
+      client2.on("connectFailed", reject);
+    });
+
+    client2.connect(`ws://localhost:${testPort}`);
+    await connectToRoomAndSendMessage2;
+
+    // 4. Send multiple vibration patterns to the room from second user
+    const expectedNumberOfMessages = 200;
+    for (const _ in new Array(expectedNumberOfMessages).fill(null)) {
+      client2Connection.send(
+        JSON.stringify({
+          type: messageTypes.sendVibrationPattern,
+          data: {
+            vibrationPattern: mockVibrationPatternObject,
+            speed: 1,
+          },
+        })
+      );
+      await new Promise((r) => setTimeout(r, 5));
+    }
+
+    await waitFor(async () => {
+      expect(totalVibrationsPatternsReceived).toEqual(expectedNumberOfMessages);
+    });
+  });
+
   it("errors when sending a 'receivedVibrationPattern' message and the data property has unexpected props", async (done) => {
     const mockVibrationPatternObject = { pattern: [] };
 

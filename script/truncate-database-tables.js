@@ -6,6 +6,7 @@ const truncateDatabaseTables = async () => {
   await database.connect(databaseName);
 
   await database.query(`TRUNCATE TABLE rooms`);
+  await database.query(`TRUNCATE TABLE messages`);
 
   await database.disconnect();
 };

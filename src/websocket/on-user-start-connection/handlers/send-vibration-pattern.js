@@ -5,7 +5,6 @@ const {
   sendErrorMessageToUser,
 } = require("../../connected-users");
 const messageTypes = require("../message-types");
-const database = require("../../../persistance/database");
 
 const sendVibrationPattern = async (currentUser, message) => {
   validateMessage(currentUser, message);
