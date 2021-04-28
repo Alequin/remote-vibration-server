@@ -17,16 +17,6 @@ const startServer = async () => {
     autoAcceptConnections: false,
   });
 
-  server.on("request", () => {
-    if (originIsAllowed(request.origin)) return;
-
-    // Make sure we only accept requests from an allowed origin
-    request.reject();
-    console.log(
-      new Date() + " Connection from origin " + request.origin + " rejected."
-    );
-  });
-
   onUserStartConnection(server, connectedUsersList);
 
   const aliveLoop = checkIfClientsAreAlive(server, connectedUsersList);
@@ -50,11 +40,6 @@ const startServer = async () => {
       return onClose;
     },
   };
-};
-
-// TODO define logic for checking origin
-const originIsAllowed = (origin) => {
-  return true;
 };
 
 module.exports = startServer;

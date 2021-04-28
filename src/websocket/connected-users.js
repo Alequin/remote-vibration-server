@@ -1,4 +1,4 @@
-const { forEach, size } = require("lodash");
+const { size } = require("lodash");
 const { v4: uuidv4 } = require("uuid");
 
 const newConnectedUsersList = () => {
