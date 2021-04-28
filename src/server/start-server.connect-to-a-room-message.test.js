@@ -160,14 +160,42 @@ describe("startServer", () => {
           JSON.stringify({
             type: messageTypes.connectToRoom,
             // 1. Attempt to connect to a room with an invalid key
-            data: { password: "bad room key" },
+            data: { password: "wrong password" },
           })
         );
 
         connection.on("message", (message) => {
           // 1. Assert an error message is returned
           expect(JSON.parse(message.utf8Data).error).toBe(
-            "There is no room for the given key"
+            "password does not exist"
+          );
+          resolve();
+        });
+      });
+      client.on("connectFailed", reject);
+    });
+
+    client.connect(`ws://localhost:${testPort}`);
+    await connectToRoomAndSendMessage;
+  });
+
+  it("returns an error if an invalid password is provided", async () => {
+    const client = new WebSocketClient();
+
+    const connectToRoomAndSendMessage = new Promise((resolve, reject) => {
+      client.on("connect", (connection) => {
+        connection.send(
+          JSON.stringify({
+            type: messageTypes.connectToRoom,
+            // 1. Attempt to connect to a room with an invalid key
+            data: { password: "123 456" },
+          })
+        );
+
+        connection.on("message", (message) => {
+          // 1. Assert an error message is returned
+          expect(JSON.parse(message.utf8Data).error).toBe(
+            "password is invalid"
           );
           resolve();
         });
