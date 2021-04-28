@@ -44,10 +44,6 @@ describe("startServer", () => {
     await server.closeServers();
   });
 
-  afterAll(async () => {
-    await dropDatabase();
-  });
-
   it("can make a request to the health endpoint", async () => {
     const response = await fetch(`http://localhost:${testPort}/health`, {
       headers: {
@@ -94,6 +90,44 @@ describe("startServer", () => {
     });
   });
 
+  it.todo("disconnects users if they send messages in a non json format");
+
+  it.todo(
+    "disconnects users if they send invalid messages which is not an object"
+  );
+
+  it.todo(
+    "disconnects users if they send invalid messages with a non string type"
+  );
+
+  it("disconnects users if they send messages which have no handlers", async () => {
+    const client = new WebSocketClient();
+
+    const connectToRoomAndSendMessage = new Promise((resolve) => {
+      client.on("connect", (connection) => {
+        connection.send(
+          // Send a message with a bad type to the server
+          JSON.stringify({
+            type: "bad message type",
+          })
+        );
+
+        connection.on("close", (msg) => {
+          resolve();
+        });
+      });
+
+      client.on("connectFailed", () => {
+        throw new Error("connection Failed");
+      });
+    });
+
+    client.connect(`ws://localhost:${testPort}`);
+    await connectToRoomAndSendMessage;
+  });
+
+  it.todo("disconnects users if they send messages which are too large");
+
   it("removes users who are disconnected from the server from any rooms", async () => {
     const mockRoomOwnerId = "123";
     const testRoom = await rooms.createRoom(mockRoomOwnerId);
@@ -138,9 +172,9 @@ describe("startServer", () => {
     await waitFor(() => expect(removeUserSpy).toHaveBeenCalledTimes(1));
 
     // 4. Assert the user is no longer in the testRoom
-    await waitFor(async () =>
-      expect((await rooms.findRoomById(testRoom.id)).users_in_room).toEqual([])
-    );
+    await waitFor(async () => {
+      expect((await rooms.findRoomById(testRoom.id)).users_in_room).toEqual([]);
+    });
   });
 
   it("removes room if it have been open for too long with no connected users", async () => {
@@ -166,34 +200,5 @@ describe("startServer", () => {
     });
 
     expect(response.status).toBe(403);
-  });
-
-  it("returns an error message if an unknown message type is sent", async () => {
-    const client = new WebSocketClient();
-
-    const connectToRoomAndSendMessage = new Promise((resolve) => {
-      client.on("connect", (connection) => {
-        connection.send(
-          // Send a message with a bad type to the server
-          JSON.stringify({
-            type: "bad message type",
-          })
-        );
-
-        connection.on("message", (message) => {
-          const parsedMessage = JSON.parse(message.utf8Data);
-          // Asserts an error message was returned
-          expect(parsedMessage.error).toBe("unknown message type");
-          resolve();
-        });
-      });
-
-      client.on("connectFailed", () => {
-        throw new Error("connection Failed");
-      });
-    });
-
-    client.connect(`ws://localhost:${testPort}`);
-    await connectToRoomAndSendMessage;
   });
 });

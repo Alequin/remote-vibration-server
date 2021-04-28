@@ -40,10 +40,6 @@ describe("startServer", () => {
     await server.closeServers();
   });
 
-  afterAll(async () => {
-    await dropDatabase();
-  });
-
   it("allows a user who is connected to a room to send a vibration pattern to other users in the same room", async (done) => {
     const mockVibrationPatternObject = { pattern: [] };
 

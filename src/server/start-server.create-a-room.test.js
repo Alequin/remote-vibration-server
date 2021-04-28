@@ -39,10 +39,6 @@ describe("startServer", () => {
     await server.closeServers();
   });
 
-  afterAll(async () => {
-    await dropDatabase();
-  });
-
   it("allows a user to create a room", async () => {
     const response = await fetch(`http://localhost:${testPort}/room`, {
       method: "POST",

@@ -13,7 +13,7 @@ const isUserInactive = (wss, connectedUsers, user) => {
 };
 
 const disconnect = async (connectedUsersList, user) => {
-  connectedUsersList.removeUser(user);
+  await connectedUsersList.removeUser(user);
   await removeUserFromAllRooms(user);
 };
 

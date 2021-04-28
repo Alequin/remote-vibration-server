@@ -40,10 +40,6 @@ describe("startServer", () => {
     await server.closeServers();
   });
 
-  afterAll(async () => {
-    await dropDatabase();
-  });
-
   it("allows a user to connect to a room", async (done) => {
     const testRoom = await rooms.createRoom("123");
 
@@ -146,9 +142,8 @@ describe("startServer", () => {
     expect(connectedUsersList.count()).toBe(2);
 
     // Assert the two users have been added to the expected room
-    expect((await rooms.findRoomById(testRoom.id)).users_in_room).toHaveLength(
-      2
-    );
+    const usersInRoom = (await rooms.findRoomById(testRoom.id)).users_in_room;
+    expect(usersInRoom).toHaveLength(2);
   });
 
   it("returns an error if a user attempts to connect to a room that does not exist", async () => {

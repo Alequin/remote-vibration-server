@@ -1,5 +1,6 @@
 const { size } = require("lodash");
 const { v4: uuidv4 } = require("uuid");
+const { removeUserFromAllRooms } = require("../persistance/rooms");
 
 const newConnectedUsersList = () => {
   const connectedUsers = {};
@@ -19,7 +20,7 @@ const newConnectedUsersList = () => {
     return connectedUsers[user.id];
   };
 
-  const removeUser = (user) => {
+  const removeUser = async (user) => {
     user.client.terminate();
     delete connectedUsers[user.id];
     return user;
