@@ -27,6 +27,7 @@ waitFor.defaults.interval = 1000;
 describe("startServer", () => {
   const testPort = 3005;
   let server = null;
+  const mockDeviceId = "012345678998765--123";
 
   beforeAll(async () => {
     await dropDatabase();
@@ -50,7 +51,7 @@ describe("startServer", () => {
   it("can make a request to the health endpoint", async () => {
     const response = await fetch(`http://localhost:${testPort}/health`, {
       headers: {
-        deviceId: "123",
+        deviceId: mockDeviceId,
       },
     });
     expect(await response.text()).toBe(

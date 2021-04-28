@@ -7,7 +7,11 @@ const confirmDeviceIdHeaderMiddleware = (app) => {
   });
 };
 
-// TODO make this check more defensive
-const isDeviceIdValid = (deviceId) => !!deviceId;
+const isDeviceIdValid = (deviceId) =>
+  !!deviceId && isDeviceIdFormatCorrect(deviceId);
+
+const validDeviceIdFormat = /\w{15}--\d*/;
+const isDeviceIdFormatCorrect = (deviceId) =>
+  validDeviceIdFormat.test(deviceId);
 
 module.exports = confirmDeviceIdHeaderMiddleware;

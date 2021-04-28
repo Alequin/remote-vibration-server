@@ -22,6 +22,7 @@ waitFor.defaults.interval = 1000;
 describe("startServer", () => {
   const testPort = 3003;
   let server = null;
+  const mockDeviceId = "012345678998765--123";
 
   beforeAll(async () => {
     await dropDatabase();
@@ -46,7 +47,7 @@ describe("startServer", () => {
     const response = await fetch(`http://localhost:${testPort}/room`, {
       method: "POST",
       headers: {
-        deviceId: "123",
+        deviceId: mockDeviceId,
       },
     });
 
@@ -61,17 +62,16 @@ describe("startServer", () => {
     expect(createdRoom.id).toBeDefined();
     expect(createdRoom.password).toBe(responseJson.password);
     expect(createdRoom.users_in_room).toEqual([]);
-    expect(createdRoom.creator_id).toEqual("123");
+    expect(createdRoom.creator_id).toEqual(mockDeviceId);
   });
 
   it("does not create a new room if the user has a room associated with their device id", async () => {
-    const deviceId = "123";
-    const testRoom = await rooms.createRoom(deviceId);
+    const testRoom = await rooms.createRoom(mockDeviceId);
 
     const response = await fetch(`http://localhost:${testPort}/room`, {
       method: "POST",
       headers: {
-        deviceId,
+        deviceId: mockDeviceId,
       },
     });
 

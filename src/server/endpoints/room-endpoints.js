@@ -1,10 +1,6 @@
 const rooms = require("../../persistance/rooms");
 
 const createRoom = (app) => {
-  /* TODO
-     - Should stop the same person from creating multiple rooms
-  */
-
   app.post("/room", async (req, res) => {
     const creatorDeviceId = req.header("deviceId");
     const previouslyCreatedRoom = await rooms.findRoomByCreatorId(
