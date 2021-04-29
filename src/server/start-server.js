@@ -34,11 +34,8 @@ const startServer = async ({ port }) =>
       resolve({
         expressServer: server,
         closeServers: async () => {
-          // Close websocket connections first
           await webSocket.closeServer();
-          // Close primary server
           await server.close();
-          // Close database after everything else has stopped
           await database.disconnect();
         },
       });

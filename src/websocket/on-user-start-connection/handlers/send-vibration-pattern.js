@@ -10,10 +10,9 @@ const sendVibrationPattern = async (currentUser, message) => {
   validateMessage(currentUser, message);
 
   // TODO make sure only one room is returned
-
   const [room] = await rooms.findRoomByUser(currentUser);
 
-  const messageToInsert = room.users_in_room
+  const messagesToInsert = room.users_in_room
     .filter((userId) => userId !== currentUser.id) // Ignore current user
     .map((recipientId) => ({
       roomId: room.id,
@@ -22,7 +21,7 @@ const sendVibrationPattern = async (currentUser, message) => {
       messageData: JSON.stringify(message.data),
     }));
 
-  await messages.addNewMessages(messageToInsert);
+  await messages.addNewMessages(messagesToInsert);
 
   sendConfirmationToSender(currentUser);
 };

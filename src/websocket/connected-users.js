@@ -21,6 +21,7 @@ const newConnectedUsersList = () => {
   };
 
   const removeUser = async (user) => {
+    await removeUserFromAllRooms(user);
     user.client.terminate();
     delete connectedUsers[user.id];
     return user;
@@ -29,7 +30,7 @@ const newConnectedUsersList = () => {
   const allUserIds = () => Object.keys(connectedUsers);
   const findUserById = (userId) => connectedUsers[userId];
 
-  const removeAllUsers = () => forEachUser(removeUser);
+  const removeAllUsers = async () => forEachUser(removeUser);
 
   const count = () => size(connectedUsers);
 

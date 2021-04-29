@@ -1,7 +1,6 @@
 const { isPlainObject, isError } = require("lodash");
 const connectedUsers = require("./connected-users");
 const messageHandlers = require("./on-user-start-connection/message-handlers");
-const processMessage = require("./on-user-start-connection/message-handlers");
 
 const onUserStartConnection = (wss, connectedUsersList) => {
   wss.on("connection", (client) => {
