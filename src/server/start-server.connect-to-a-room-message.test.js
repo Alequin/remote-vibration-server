@@ -51,7 +51,7 @@ describe("startServer", () => {
             (await rooms.findRoomById(testRoom.id)).users_in_room
           ).toHaveLength(1);
 
-          // 3. Assert an message is sent to confirm the room connection
+          // 3. Assert a message is sent to confirm the room connection
           expect(JSON.parse(message.utf8Data).type).toBe(
             messageTypes.confirmRoomConnection
           );
@@ -197,7 +197,45 @@ describe("startServer", () => {
     await connectToRoomAndSendMessage;
   });
 
-  it.todo(
-    "removes a user from their currently connect room if they try to connect to a different room"
-  );
+  it("removes a user from their currently connect room if they try to connect to a different room", async (done) => {
+    const testRoom1 = await rooms.createRoom("123");
+    const testRoom2 = await rooms.createRoom("345");
+
+    const client = new WebSocketClient();
+
+    client.on("connect", (connection) => {
+      connection.on("message", async () => {
+        const isUserInRoom1 =
+          (await rooms.findRoomById(testRoom1.id)).users_in_room.length === 1;
+        const isUserInRoom2 =
+          (await rooms.findRoomById(testRoom2.id)).users_in_room.length === 1;
+
+        if (isUserInRoom1) {
+          // 1. Confirm user is not is room 2 when in room 1
+          expect(isUserInRoom2).toBe(false);
+          // 2. Connect to room 2
+          connection.send(
+            JSON.stringify({
+              type: messageTypes.connectToRoom,
+              data: { password: testRoom2.password },
+            })
+          );
+        }
+
+        if (isUserInRoom2) {
+          // 3. Confirm user has been removed from room 1 after moving to room 2
+          expect(isUserInRoom1).toBe(false);
+          done();
+        }
+      });
+
+      connection.send(
+        JSON.stringify({
+          type: messageTypes.connectToRoom,
+          data: { password: testRoom1.password },
+        })
+      );
+    });
+    client.connect(`ws://localhost:${testPort}`);
+  });
 });

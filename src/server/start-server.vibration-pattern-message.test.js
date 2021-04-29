@@ -17,6 +17,7 @@ const dropDatabase = require("../../script/drop-database");
 const createDatabase = require("../../script/create-database");
 const truncateDatabaseTables = require("../../script/truncate-database-tables");
 const database = require("../persistance/database");
+const messageHandlers = require("../websocket/on-user-start-connection/message-handlers");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -608,7 +609,92 @@ describe("startServer", () => {
     );
   });
 
-  it.todo(
-    "Only send vibration messages to a single room if a user is connected to multiple rooms"
-  );
+  it("disconnects users if they send messages in a non json format", async (done) => {
+    const client1 = new WebSocketClient();
+
+    client1.on("connect", (connection) => {
+      connection.send("//;;''");
+
+      connection.on("close", () => {
+        done();
+      });
+    });
+    client1.on("connectFailed", () => {
+      throw new Error("connectFailed");
+    });
+    client1.connect(`ws://localhost:${testPort}`);
+  });
+
+  it("disconnects users if they send an invalid message which is not an object", async (done) => {
+    const client1 = new WebSocketClient();
+
+    client1.on("connect", (connection) => {
+      connection.send(JSON.stringify("123"));
+
+      connection.on("close", () => {
+        done();
+      });
+    });
+    client1.on("connectFailed", () => {
+      throw new Error("connectFailed");
+    });
+    client1.connect(`ws://localhost:${testPort}`);
+  });
+
+  it("disconnects users if they send invalid messages with a non string type", async (done) => {
+    const client1 = new WebSocketClient();
+
+    client1.on("connect", (connection) => {
+      connection.send(JSON.stringify({ type: { a: 1 } }));
+
+      connection.on("close", () => {
+        done();
+      });
+    });
+    client1.on("connectFailed", () => {
+      throw new Error("connectFailed");
+    });
+    client1.connect(`ws://localhost:${testPort}`);
+  });
+
+  it("disconnects users if they send messages which have no handlers", async (done) => {
+    const client1 = new WebSocketClient();
+
+    client1.on("connect", (connection) => {
+      connection.send(
+        JSON.stringify({
+          type: "bad message type",
+        })
+      );
+
+      connection.on("close", () => {
+        done();
+      });
+    });
+    client1.on("connectFailed", () => {
+      throw new Error("connectFailed");
+    });
+    client1.connect(`ws://localhost:${testPort}`);
+  });
+
+  it("disconnects users if they send messages which are too large", async (done) => {
+    const client1 = new WebSocketClient();
+
+    client1.on("connect", (connection) => {
+      connection.send(
+        JSON.stringify({
+          type: messageHandlers.connectToRoom,
+          bigProperty: "bad message type".repeat(30),
+        })
+      );
+
+      connection.on("close", () => {
+        done();
+      });
+    });
+    client1.on("connectFailed", () => {
+      throw new Error("connectFailed");
+    });
+    client1.connect(`ws://localhost:${testPort}`);
+  });
 });

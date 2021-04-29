@@ -85,44 +85,6 @@ describe("startServer", () => {
     });
   });
 
-  it.todo("disconnects users if they send messages in a non json format");
-
-  it.todo(
-    "disconnects users if they send invalid messages which is not an object"
-  );
-
-  it.todo(
-    "disconnects users if they send invalid messages with a non string type"
-  );
-
-  it("disconnects users if they send messages which have no handlers", async () => {
-    const client = new WebSocketClient();
-
-    const connectToRoomAndSendMessage = new Promise((resolve) => {
-      client.on("connect", (connection) => {
-        connection.send(
-          // Send a message with a bad type to the server
-          JSON.stringify({
-            type: "bad message type",
-          })
-        );
-
-        connection.on("close", (msg) => {
-          resolve();
-        });
-      });
-
-      client.on("connectFailed", () => {
-        throw new Error("connection Failed");
-      });
-    });
-
-    client.connect(`ws://localhost:${testPort}`);
-    await connectToRoomAndSendMessage;
-  });
-
-  it.todo("disconnects users if they send messages which are too large");
-
   it("removes users who are disconnected from the server from any rooms", async () => {
     const mockRoomOwnerId = "123";
     const testRoom = await rooms.createRoom(mockRoomOwnerId);

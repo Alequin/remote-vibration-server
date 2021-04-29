@@ -8,6 +8,7 @@ const onUserStartConnection = (wss, connectedUsersList) => {
 
     currentUser.client.on("message", async (message) => {
       const parsedMessage = parseMessage(message);
+
       if (isError(parsedMessage) || !isMessageValid(message, parsedMessage)) {
         // TODO log bad messages
         // disconnect users who send non json or non valid messages
@@ -44,7 +45,7 @@ const parseMessage = (message) => {
 };
 
 const isMessageValid = (message, parsedMessage) =>
-  Buffer.byteLength(message, "utf8") < 1000 &&
+  Buffer.byteLength(message, "utf8") < 300 &&
   isPlainObject(parsedMessage) &&
   typeof parsedMessage.type === "string";
 
