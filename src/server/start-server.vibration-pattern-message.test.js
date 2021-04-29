@@ -25,11 +25,6 @@ describe("startServer", () => {
   const testPort = 3006;
   let server = null;
 
-  beforeAll(async () => {
-    await dropDatabase();
-    await createDatabase();
-  });
-
   beforeEach(async () => {
     await truncateDatabaseTables();
 
@@ -608,63 +603,6 @@ describe("startServer", () => {
         type: messageTypes.sendVibrationPattern,
         data: {
           vibrationPattern: mockVibrationPatternObject,
-        },
-      })
-    );
-  });
-
-  it("returns a message to the current user when a vibration is sent to confirm it have been received", async (done) => {
-    const mockVibrationPatternObject = { pattern: [] };
-
-    const testRoom = await rooms.createRoom("123");
-
-    const client = new WebSocketClient();
-
-    // 1. Connect  user
-    let clientConnection = null;
-    const connectToRoomAndSendMessage2 = new Promise((resolve, reject) => {
-      client.on("connect", (connection) => {
-        connection.send(
-          JSON.stringify({
-            type: messageTypes.connectToRoom,
-            data: { password: testRoom.password },
-          }),
-          resolve
-        );
-        clientConnection = connection;
-      });
-      client.on("connectFailed", reject);
-    });
-
-    client.connect(`ws://localhost:${testPort}`);
-    await connectToRoomAndSendMessage2;
-
-    clientConnection.on("message", (message) => {
-      const parsedMessage = JSON.parse(message.utf8Data);
-
-      // 2. Confirm room connection
-      if (parsedMessage.type === messageTypes.confirmRoomConnection) {
-        expect(parsedMessage).toEqual({
-          type: messageTypes.confirmRoomConnection,
-        });
-      }
-
-      // 4. Assert a confirmation message was received after sending the vibration
-      if (parsedMessage.type === messageTypes.confirmVibrationPatternSent) {
-        expect(parsedMessage).toEqual({
-          type: messageTypes.confirmVibrationPatternSent,
-        });
-        done();
-      }
-    });
-
-    // 3. Send a vibration pattern to the room
-    clientConnection.send(
-      JSON.stringify({
-        type: messageTypes.sendVibrationPattern,
-        data: {
-          vibrationPattern: mockVibrationPatternObject,
-          speed: 1,
         },
       })
     );

@@ -24,11 +24,6 @@ describe("startServer", () => {
   let server = null;
   const mockDeviceId = "012345678998765--123";
 
-  beforeAll(async () => {
-    await dropDatabase();
-    await createDatabase();
-  });
-
   beforeEach(async () => {
     await truncateDatabaseTables();
 

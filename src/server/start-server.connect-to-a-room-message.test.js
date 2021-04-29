@@ -25,11 +25,6 @@ describe("startServer", () => {
   const testPort = 3002;
   let server = null;
 
-  beforeAll(async () => {
-    await dropDatabase();
-    await createDatabase();
-  });
-
   beforeEach(async () => {
     await truncateDatabaseTables();
 
