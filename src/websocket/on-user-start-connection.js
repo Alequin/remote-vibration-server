@@ -1,4 +1,5 @@
 const { isPlainObject, isError } = require("lodash");
+const logger = require("../logger");
 const connectedUsers = require("./connected-users");
 const messageHandlers = require("./on-user-start-connection/message-handlers");
 
@@ -9,24 +10,28 @@ const onUserStartConnection = (wss, connectedUsersList) => {
     currentUser.client.on("message", async (message) => {
       const parsedMessage = parseMessage(message);
 
+      const didParsingMessageCauseError = isError(parsedMessage);
+
       if (isError(parsedMessage) || !isMessageValid(message, parsedMessage)) {
-        // TODO log bad messages
-        // disconnect users who send non json or non valid messages
+        logger.warn(
+          `User disconnected to due to an invalid message / Message: ${message}`
+        );
         return connectedUsersList.removeUser(currentUser);
       }
 
       const handler = messageHandlers[parsedMessage.type];
 
       if (!handler) {
-        // TODO log invalid handlers requests
-        // Disconnect users who send unusable messages
+        logger.warn(
+          `User disconnected to due an unrecognized message type / Message: ${message}`
+        );
         return connectedUsersList.removeUser(currentUser);
       }
 
       try {
         await handler(currentUser, parsedMessage);
       } catch (error) {
-        // TODO add error logging
+        logger.error(error);
       }
     });
 
