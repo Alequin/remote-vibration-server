@@ -45,7 +45,13 @@ const newConnectedUsersList = () => {
   };
 };
 
-const setReceivedPongStatus = (user, status) => (user.hasReceivedPong = status);
+const markUserAsNeedingToReceivePong = (user) => {
+  user.hasReceivedPong = false;
+};
+
+const markUserAsHavingReceivePong = (user) => {
+  user.hasReceivedPong = true;
+};
 
 const hasReceivedPongFromUser = (user) => user.hasReceivedPong;
 
@@ -58,6 +64,7 @@ module.exports = {
   connectedUsersList: newConnectedUsersList(),
   sendMessageToUser,
   sendErrorMessageToUser,
-  setReceivedPongStatus,
+  markUserAsNeedingToReceivePong,
+  markUserAsHavingReceivePong,
   hasReceivedPongFromUser,
 };

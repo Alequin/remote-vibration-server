@@ -10,8 +10,6 @@ const onUserStartConnection = (wss, connectedUsersList) => {
     currentUser.client.on("message", async (message) => {
       const parsedMessage = parseMessage(message);
 
-      const didParsingMessageCauseError = isError(parsedMessage);
-
       if (isError(parsedMessage) || !isMessageValid(message, parsedMessage)) {
         logger.warn(
           `User disconnected to due to an invalid message / Message: ${message}`
@@ -35,9 +33,9 @@ const onUserStartConnection = (wss, connectedUsersList) => {
       }
     });
 
-    currentUser.client.on("pong", () => {
-      connectedUsers.setReceivedPongStatus(currentUser, true);
-    });
+    currentUser.client.on("pong", () =>
+      connectedUsers.markUserAsHavingReceivePong(currentUser)
+    );
   });
 };
 

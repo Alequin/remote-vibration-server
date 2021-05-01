@@ -18,6 +18,7 @@ const startServer = require("./start-server");
 const rooms = require("../persistance/rooms");
 const messageTypes = require("../websocket/on-user-start-connection/message-types");
 const database = require("../persistance/database");
+const { noop } = require("lodash");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -145,6 +146,50 @@ describe("startServer", () => {
       // After a period of time the room should be removed
       expect(await rooms.findRoomById(testRoom.id)).not.toBeDefined()
     );
+  });
+
+  it("removes clients which do not return a 'pong' when the server returns a ping", async () => {
+    // Do nothing to fake the user not receiving the pong from the client
+    jest
+      .spyOn(connectedUsers, "markUserAsHavingReceivePong")
+      .mockImplementationOnce(noop);
+
+    const removeUserSpy = jest.spyOn(
+      connectedUsers.connectedUsersList,
+      "removeUser"
+    );
+
+    const mockRoomOwnerId = "123";
+    const testRoom = await rooms.createRoom(mockRoomOwnerId);
+
+    const client = new w3cwebsocket(`ws://localhost:${testPort}`);
+    const clientConnection = new Promise((resolve) => {
+      client.onopen = () => {
+        client.send(
+          JSON.stringify({
+            type: messageTypes.connectToRoom,
+            data: { password: testRoom.password },
+          })
+        );
+      };
+
+      client.onmessage = (message) => {
+        const parsedMessage = JSON.parse(message.data);
+        if (parsedMessage.type === messageTypes.confirmRoomConnection) {
+          expect(parsedMessage.type === messageTypes.confirmRoomConnection);
+          resolve();
+        }
+      };
+    });
+    await clientConnection;
+
+    // 1. Assert the user is recognized as disconnected
+    await waitFor(() => expect(removeUserSpy).toHaveBeenCalledTimes(1));
+
+    // 2. Assert the user is no longer in the testRoom
+    await waitFor(async () => {
+      expect((await rooms.findRoomById(testRoom.id)).users_in_room).toEqual([]);
+    });
   });
 
   it("errors if a device id is not given in the headers when making rest requests", async () => {
