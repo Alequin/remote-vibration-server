@@ -17,7 +17,7 @@ const startServer = async () => {
     autoAcceptConnections: false,
   });
 
-  onUserStartConnection(server, connectedUsersList);
+  onUserStartConnection(server);
 
   const aliveLoop = checkIfClientsAreAlive(server, connectedUsersList);
   const activeRoomsLoop = checkIfRoomsAreAbandoned(rooms);
