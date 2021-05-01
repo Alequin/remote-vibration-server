@@ -1,39 +1,62 @@
 const { Pool } = require("pg");
 const environment = require("../environment");
+const logger = require("../logger");
 
 const setupDatabaseInterface = () => {
   let pool = null;
 
   const connect = async (databaseName) => {
-    pool = new Pool(databaseConfig(databaseName));
+    try {
+      pool = new Pool(databaseConfig(databaseName));
+    } catch (error) {
+      logger.error("Unable to connect to the database");
+      throw error;
+    }
   };
 
   const query = async (query, variables) => {
     if (!pool)
       throw new Error("Query Error: Client is not connected to database");
 
-    const client = await pool.connect();
-    const rows = await client.query(query, variables).then(({ rows }) => rows);
-    client.release();
+    try {
+      const client = await pool.connect();
+      const rows = await client
+        .query(query, variables)
+        .then(({ rows }) => rows);
+      client.release();
 
-    return rows;
+      return rows;
+    } catch (error) {
+      logger.error("Unable to call database query");
+      throw error;
+    }
   };
 
   const onNotification = async (callback) => {
     if (!pool)
       throw new Error("Query Error: Client is not connected to database");
 
-    const client = await pool.connect();
-    client.on("notification", callback);
-    return () => client.release();
+    try {
+      const client = await pool.connect();
+      client.on("notification", callback);
+      return () => client.release();
+    } catch (error) {
+      logger.error("Unable to watch database for notifications");
+      throw error;
+    }
   };
 
   const disconnect = async () => {
     if (!pool)
       throw new Error("Disconnect Error: Client is not connected to database");
 
-    await pool.end();
-    pool = null;
+    try {
+      await pool.end();
+      pool = null;
+    } catch (error) {
+      logger.error("Unable to end database pool");
+      throw error;
+    }
   };
 
   return {

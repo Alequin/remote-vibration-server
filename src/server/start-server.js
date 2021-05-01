@@ -1,4 +1,6 @@
 const express = require("express");
+const fs = require("fs");
+const logger = require("../logger");
 const currentDatabaseName = require("../persistance/current-database-name");
 const database = require("../persistance/database");
 const startWebsocketServer = require("../websocket/start-websocket-server");
@@ -31,15 +33,37 @@ const startServer = async ({ port }) =>
           webSocket.server.emit("connection", socket, request);
         });
       });
+
+      let hasClosed = false;
       resolve({
         expressServer: server,
         closeServers: async () => {
-          await webSocket.closeServer();
-          await server.close();
-          await database.disconnect();
+          if (hasClosed) return;
+          hasClosed = true;
+          await logOnError(
+            webSocket.closeServer,
+            `There was an error while closing the websocket server`
+          );
+          await logOnError(
+            () => server.close(), // New function due to use of "this" by express server
+            `There was an error while closing the main server`
+          );
+          await logOnError(
+            database.disconnect,
+            `There was an error while disconnecting the database connection`
+          );
         },
       });
     });
   });
+
+const logOnError = async (functionWhichMayError, errorMessage) => {
+  try {
+    return await functionWhichMayError();
+  } catch (error) {
+    logger.error(errorMessage);
+    logger.error(error);
+  }
+};
 
 module.exports = startServer;

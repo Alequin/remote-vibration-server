@@ -8,9 +8,7 @@ jest.mock(
   () => ({ checkRoomsInterval: () => 2000 })
 );
 
-const createDatabase = require("../../script/create-database");
 const truncateDatabaseTables = require("../../script/truncate-database-tables");
-const dropDatabase = require("../../script/drop-database");
 
 const fetch = require("node-fetch");
 var { client: WebSocketClient, w3cwebsocket } = require("websocket");
@@ -45,9 +43,7 @@ describe("startServer", () => {
         deviceId: mockDeviceId,
       },
     });
-    expect(await response.text()).toBe(
-      `{"status":"OK","totalConnectionUsers":0}`
-    );
+    expect(await response.text()).toBe(`{"status":"OK"}`);
   });
 
   it("can connect to the server using web sockets", async () => {
