@@ -1,20 +1,17 @@
 const { isPlainObject, isError } = require("lodash");
 const logger = require("../logger");
-const {
-  connectedUsersList,
-  markUserAsHavingReceivePong,
-} = require("./connected-users");
+const connectedUsers = require("./connected-users");
 const messageHandlers = require("./on-user-start-connection/message-handlers");
 const parseJsonWithErrorHandling = require("./on-user-start-connection/parse-json-with-error-handling");
 
 const onUserStartConnection = (wss) => {
   wss.on("connection", (client) => {
-    const currentUser = connectedUsersList.addUser(client);
+    const currentUser = connectedUsers.connectedUsersList.addUser(client);
 
     currentUser.client.on("message", onUserReceivedMessage(currentUser));
 
     currentUser.client.on("pong", () =>
-      markUserAsHavingReceivePong(currentUser)
+      connectedUsers.markUserAsHavingReceivePong(currentUser)
     );
   });
 };
@@ -26,7 +23,7 @@ const onUserReceivedMessage = (currentUser) => async (message) => {
     logger.warn(
       `User disconnected to due to an invalid message / Message: ${message}`
     );
-    return connectedUsersList.removeUser(currentUser);
+    return connectedUsers.connectedUsersList.removeUser(currentUser);
   }
 
   const handler = messageHandlers[parsedMessage.type];
@@ -35,7 +32,7 @@ const onUserReceivedMessage = (currentUser) => async (message) => {
     logger.warn(
       `User disconnected to due an unrecognized message type / Message: ${message}`
     );
-    return connectedUsersList.removeUser(currentUser);
+    return connectedUsers.connectedUsersList.removeUser(currentUser);
   }
 
   try {
