@@ -12,7 +12,8 @@ const sendVibrationPattern = async (currentUser, message) => {
   const [room] = await rooms.findRoomByUser(currentUser);
 
   const messagesToInsert = room.users_in_room
-    .filter((userId) => userId !== currentUser.id) // Ignore current user
+    // Filter out current user as they are the one who is sending the message
+    .filter((userId) => userId !== currentUser.id)
     .map((recipientId) => ({
       roomId: room.id,
       recipientId,
