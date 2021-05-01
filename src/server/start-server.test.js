@@ -19,6 +19,7 @@ const rooms = require("../persistance/rooms");
 const messageTypes = require("../websocket/on-user-start-connection/message-types");
 const database = require("../persistance/database");
 const { noop } = require("lodash");
+const environment = require("../environment");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -38,12 +39,8 @@ describe("startServer", () => {
     await server.closeServers();
   });
 
-  it("can make a request to the health endpoint", async () => {
-    const response = await fetch(`http://localhost:${testPort}/health`, {
-      headers: {
-        deviceId: mockDeviceId,
-      },
-    });
+  it("can make a request to the health endpoint without a device id or auth token", async () => {
+    const response = await fetch(`http://localhost:${testPort}/health`, {});
     expect(await response.text()).toBe(`{"status":"OK"}`);
   });
 
@@ -59,6 +56,15 @@ describe("startServer", () => {
 
     // Asserts connection to server resolves
     await expect(actual).resolves.toBeDefined();
+  });
+
+  it("errors if you do not provide an auth token", async () => {
+    const response = await fetch(`http://localhost:${testPort}`, {
+      headers: {
+        deviceId: mockDeviceId,
+      },
+    });
+    expect(response.status).toBe(401);
   });
 
   it("disconnects users when the client closes the connection", async () => {
@@ -195,6 +201,9 @@ describe("startServer", () => {
   it("errors if a device id is not given in the headers when making rest requests", async () => {
     const response = await fetch(`http://localhost:${testPort}/room`, {
       method: "POST",
+      headers: {
+        authToken: environment.serverAuthToken,
+      },
     });
 
     expect(response.status).toBe(403);

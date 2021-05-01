@@ -43,8 +43,12 @@ const onUserReceivedMessage = (currentUser) => async (message) => {
 };
 
 const isMessageValid = (message, parsedMessage) =>
-  Buffer.byteLength(message, "utf8") < 300 &&
+  !isMessageToLarge(message) &&
   isPlainObject(parsedMessage) &&
   typeof parsedMessage.type === "string";
+
+const MAX_MESSAGE_SIZE_IN_BYTES = 300;
+const isMessageToLarge = (message) =>
+  Buffer.byteLength(message, "utf8") > MAX_MESSAGE_SIZE_IN_BYTES;
 
 module.exports = onUserStartConnection;

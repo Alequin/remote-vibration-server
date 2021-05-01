@@ -6,6 +6,7 @@ const database = require("../persistance/database");
 const startWebsocketServer = require("../websocket/start-websocket-server");
 const healthEndpoint = require("./endpoints/health-endpoint");
 const roomEndpoints = require("./endpoints/room-endpoints");
+const checkAuthTokenMiddleware = require("./middleware/check-auth-token-middleware");
 const confirmDeviceIdHeaderMiddleware = require("./middleware/confirm-device-id-header-middleware");
 
 const startServer = async ({ port }) =>
@@ -17,9 +18,9 @@ const startServer = async ({ port }) =>
     // parse application/json
     app.use(express.json());
 
-    confirmDeviceIdHeaderMiddleware(app);
-
     healthEndpoint(app);
+    checkAuthTokenMiddleware(app);
+    confirmDeviceIdHeaderMiddleware(app);
     roomEndpoints.createRoom(app);
 
     const webSocket = await startWebsocketServer();

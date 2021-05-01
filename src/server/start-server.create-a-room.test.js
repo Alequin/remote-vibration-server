@@ -10,6 +10,7 @@ const rooms = require("../persistance/rooms");
 const dropDatabase = require("../../script/drop-database");
 const createDatabase = require("../../script/create-database");
 const truncateDatabaseTables = require("../../script/truncate-database-tables");
+const environment = require("../environment");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -34,6 +35,7 @@ describe("startServer", () => {
       method: "POST",
       headers: {
         deviceId: mockDeviceId,
+        authToken: environment.serverAuthToken,
       },
     });
 
@@ -58,6 +60,7 @@ describe("startServer", () => {
       method: "POST",
       headers: {
         deviceId: mockDeviceId,
+        authToken: environment.serverAuthToken,
       },
     });
 
