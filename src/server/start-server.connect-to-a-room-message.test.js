@@ -3,11 +3,6 @@ jest.mock(
   () => ({ checkAliveClientsInterval: () => 2000 })
 );
 
-jest.mock(
-  "../websocket/check-if-rooms-are-abandoned/check-rooms-interval",
-  () => ({ checkRoomsInterval: () => 2000 })
-);
-
 var { client: WebSocketClient } = require("websocket");
 const { default: waitFor } = require("wait-for-expect");
 const startServer = require("./start-server");
