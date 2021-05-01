@@ -9,7 +9,6 @@ const messageTypes = require("../message-types");
 const sendVibrationPattern = async (currentUser, message) => {
   validateMessage(currentUser, message);
 
-  // TODO make sure only one room is returned
   const [room] = await rooms.findRoomByUser(currentUser);
 
   const messagesToInsert = room.users_in_room
