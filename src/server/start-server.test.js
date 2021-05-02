@@ -20,6 +20,8 @@ const messageTypes = require("../websocket/on-user-start-connection/message-type
 const database = require("../persistance/database");
 const { noop } = require("lodash");
 const environment = require("../environment");
+const { serverAuthToken } = require("../environment");
+const { connectedUsersList } = require("../websocket/connected-users");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -52,10 +54,13 @@ describe("startServer", () => {
       client.on("connectFailed", reject);
     });
 
-    client.connect(`ws://localhost:${testPort}`);
+    client.connect(`ws://localhost:${testPort}`, null, null, {
+      authToken: serverAuthToken,
+    });
 
     // Asserts connection to server resolves
     await expect(actual).resolves.toBeDefined();
+    expect(connectedUsersList.count()).toBe(1);
   });
 
   it("errors if you do not provide an auth token", async () => {
@@ -68,7 +73,9 @@ describe("startServer", () => {
   });
 
   it("disconnects users when the client closes the connection", async () => {
-    const client = new w3cwebsocket(`ws://localhost:${testPort}`);
+    const client = new w3cwebsocket(`ws://localhost:${testPort}`, null, null, {
+      authToken: serverAuthToken,
+    });
 
     const clientConnection = new Promise((resolve) => {
       client.onopen = resolve;
@@ -88,11 +95,27 @@ describe("startServer", () => {
     });
   });
 
+  it("disconnects users if they try to connect but do not provide the auth token", async () => {
+    const client = new WebSocketClient();
+
+    client.connect(`ws://localhost:${testPort}`);
+
+    const actual = new Promise((resolve, reject) => {
+      client.on("connect", resolve);
+      client.on("connectFailed", reject);
+    });
+
+    await actual;
+    expect(connectedUsersList.count()).toBe(0);
+  });
+
   it("removes users who are disconnected from the server from any rooms", async () => {
     const mockRoomOwnerId = "123";
     const testRoom = await rooms.createRoom(mockRoomOwnerId);
 
-    const client = new w3cwebsocket(`ws://localhost:${testPort}`);
+    const client = new w3cwebsocket(`ws://localhost:${testPort}`, null, null, {
+      authToken: serverAuthToken,
+    });
     const clientConnection = new Promise((resolve) => {
       client.onopen = () => {
         client.send(
@@ -168,7 +191,9 @@ describe("startServer", () => {
     const mockRoomOwnerId = "123";
     const testRoom = await rooms.createRoom(mockRoomOwnerId);
 
-    const client = new w3cwebsocket(`ws://localhost:${testPort}`);
+    const client = new w3cwebsocket(`ws://localhost:${testPort}`, null, null, {
+      authToken: serverAuthToken,
+    });
     const clientConnection = new Promise((resolve) => {
       client.onopen = () => {
         client.send(

@@ -12,6 +12,7 @@ const messageTypes = require("../websocket/on-user-start-connection/message-type
 const dropDatabase = require("../../script/drop-database");
 const createDatabase = require("../../script/create-database");
 const truncateDatabaseTables = require("../../script/truncate-database-tables");
+const { serverAuthToken } = require("../environment");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -64,7 +65,9 @@ describe("startServer", () => {
       client.on("connectFailed", reject);
     });
 
-    client.connect(`ws://localhost:${testPort}`);
+    client.connect(`ws://localhost:${testPort}`, null, null, {
+      authToken: serverAuthToken,
+    });
     await connectToRoomAndSendMessage;
   });
 
@@ -89,7 +92,9 @@ describe("startServer", () => {
       client.on("connectFailed", reject);
     });
 
-    client.connect(`ws://localhost:${testPort}`);
+    client.connect(`ws://localhost:${testPort}`, null, null, {
+      authToken: serverAuthToken,
+    });
     await connectToRoomAndSendMessage;
 
     await waitFor(async () => {
@@ -124,7 +129,9 @@ describe("startServer", () => {
         client.on("connectFailed", reject);
       });
 
-      client.connect(`ws://localhost:${testPort}`);
+      client.connect(`ws://localhost:${testPort}`, null, null, {
+        authToken: serverAuthToken,
+      });
       await connectToRoomAndSendMessage;
     }
 
@@ -160,7 +167,9 @@ describe("startServer", () => {
       client.on("connectFailed", reject);
     });
 
-    client.connect(`ws://localhost:${testPort}`);
+    client.connect(`ws://localhost:${testPort}`, null, null, {
+      authToken: serverAuthToken,
+    });
     await connectToRoomAndSendMessage;
   });
 
@@ -188,7 +197,9 @@ describe("startServer", () => {
       client.on("connectFailed", reject);
     });
 
-    client.connect(`ws://localhost:${testPort}`);
+    client.connect(`ws://localhost:${testPort}`, null, null, {
+      authToken: serverAuthToken,
+    });
     await connectToRoomAndSendMessage;
   });
 
@@ -231,6 +242,8 @@ describe("startServer", () => {
         })
       );
     });
-    client.connect(`ws://localhost:${testPort}`);
+    client.connect(`ws://localhost:${testPort}`, null, null, {
+      authToken: serverAuthToken,
+    });
   });
 });

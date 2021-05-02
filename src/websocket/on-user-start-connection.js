@@ -3,9 +3,16 @@ const logger = require("../logger");
 const connectedUsers = require("./connected-users");
 const messageHandlers = require("./on-user-start-connection/message-handlers");
 const parseJsonWithErrorHandling = require("./on-user-start-connection/parse-json-with-error-handling");
+const isAuthTokenValid = require("../server/check-auth-token");
 
 const onUserStartConnection = (wss) => {
-  wss.on("connection", (client) => {
+  wss.on("connection", (client, req) => {
+    if (!isAuthTokenValid(req.headers.authtoken)) {
+      logger.error("Client attempt to connect without an auth token");
+      client.terminate();
+      return;
+    }
+
     const currentUser = connectedUsers.connectedUsersList.addUser(client);
 
     currentUser.client.on("message", onUserReceivedMessage(currentUser));
