@@ -65,9 +65,14 @@ describe("startServer", () => {
       client.on("connectFailed", reject);
     });
 
-    client.connect(`ws://localhost:${testPort}`, null, null, {
-      authToken: serverAuthToken,
-    });
+    client.connect(
+      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
+      null,
+      null,
+      {
+        authToken: serverAuthToken,
+      }
+    );
     await connectToRoomAndSendMessage;
   });
 
@@ -92,9 +97,14 @@ describe("startServer", () => {
       client.on("connectFailed", reject);
     });
 
-    client.connect(`ws://localhost:${testPort}`, null, null, {
-      authToken: serverAuthToken,
-    });
+    client.connect(
+      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
+      null,
+      null,
+      {
+        authToken: serverAuthToken,
+      }
+    );
     await connectToRoomAndSendMessage;
 
     await waitFor(async () => {
@@ -129,9 +139,14 @@ describe("startServer", () => {
         client.on("connectFailed", reject);
       });
 
-      client.connect(`ws://localhost:${testPort}`, null, null, {
-        authToken: serverAuthToken,
-      });
+      client.connect(
+        `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
+        null,
+        null,
+        {
+          authToken: serverAuthToken,
+        }
+      );
       await connectToRoomAndSendMessage;
     }
 
@@ -167,9 +182,14 @@ describe("startServer", () => {
       client.on("connectFailed", reject);
     });
 
-    client.connect(`ws://localhost:${testPort}`, null, null, {
-      authToken: serverAuthToken,
-    });
+    client.connect(
+      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
+      null,
+      null,
+      {
+        authToken: serverAuthToken,
+      }
+    );
     await connectToRoomAndSendMessage;
   });
 
@@ -197,9 +217,14 @@ describe("startServer", () => {
       client.on("connectFailed", reject);
     });
 
-    client.connect(`ws://localhost:${testPort}`, null, null, {
-      authToken: serverAuthToken,
-    });
+    client.connect(
+      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
+      null,
+      null,
+      {
+        authToken: serverAuthToken,
+      }
+    );
     await connectToRoomAndSendMessage;
   });
 
@@ -242,8 +267,13 @@ describe("startServer", () => {
         })
       );
     });
-    client.connect(`ws://localhost:${testPort}`, null, null, {
-      authToken: serverAuthToken,
-    });
+    client.connect(
+      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
+      null,
+      null,
+      {
+        authToken: serverAuthToken,
+      }
+    );
   });
 });

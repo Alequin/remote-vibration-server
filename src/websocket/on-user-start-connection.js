@@ -7,7 +7,9 @@ const isAuthTokenValid = require("../server/check-auth-token");
 
 const onUserStartConnection = (wss) => {
   wss.on("connection", (client, req) => {
-    if (!isAuthTokenValid(req.headers.authtoken)) {
+    // Query string used as connections from mobile seem to pass custom headers to the server
+    const authToken = authTokenFromSearchParams(req.url);
+    if (!isAuthTokenValid(authToken)) {
       logger.error("Client attempt to connect without an auth token");
       client.terminate();
       return;
@@ -48,6 +50,9 @@ const onUserReceivedMessage = (currentUser) => async (message) => {
     logger.error(error);
   }
 };
+
+const authTokenFromSearchParams = (url) =>
+  new URLSearchParams(url.replace(/^.*\?/, "")).get("authToken");
 
 const isMessageValid = (message, parsedMessage) =>
   !isMessageToLarge(message) &&
