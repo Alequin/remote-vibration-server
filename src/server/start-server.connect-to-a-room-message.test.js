@@ -2,17 +2,20 @@ jest.mock(
   "../websocket/check-if-clients-are-alive/check-alive-clients-interval",
   () => ({ checkAliveClientsInterval: () => 2000 })
 );
+jest.mock(
+  "../websocket/check-if-rooms-are-abandoned/check-rooms-interval",
+  () => ({ checkRoomsInterval: () => 2000 })
+);
 
-var { client: WebSocketClient } = require("websocket");
+var { client: WebSocketClient, w3cwebsocket } = require("websocket");
 const { default: waitFor } = require("wait-for-expect");
 const startServer = require("./start-server");
 const rooms = require("../persistance/rooms");
 const { connectedUsersList } = require("../websocket/connected-users");
 const messageTypes = require("../websocket/on-user-start-connection/message-types");
-const dropDatabase = require("../../script/drop-database");
-const createDatabase = require("../../script/create-database");
 const truncateDatabaseTables = require("../../script/truncate-database-tables");
 const { serverAuthToken } = require("../environment");
+const database = require("../persistance/database");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -275,5 +278,75 @@ describe("startServer", () => {
         authToken: serverAuthToken,
       }
     );
+  });
+
+  it("removes users who are disconnected from the server from any rooms", async () => {
+    const mockRoomOwnerId = "123";
+    const testRoom = await rooms.createRoom(mockRoomOwnerId);
+
+    const client = new w3cwebsocket(
+      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
+      null,
+      null,
+      {
+        authToken: serverAuthToken,
+      }
+    );
+    const clientConnection = new Promise((resolve) => {
+      client.onopen = () => {
+        client.send(
+          JSON.stringify({
+            type: messageTypes.connectToRoom,
+            data: { password: testRoom.password },
+          })
+        );
+      };
+
+      client.onmessage = (message) => {
+        const parsedMessage = JSON.parse(message.data);
+        if (parsedMessage.type === messageTypes.confirmRoomConnection) {
+          expect(parsedMessage.type === messageTypes.confirmRoomConnection);
+          resolve();
+        }
+      };
+    });
+    await clientConnection;
+
+    await waitFor(async () => {
+      // 1. Assert the user has connected to the room
+      const users_in_room = (await rooms.findRoomById(testRoom.id))
+        ?.users_in_room;
+
+      expect(users_in_room.length).toBe(1);
+    });
+
+    // 2. close the clients connection
+    const removeUserSpy = jest.spyOn(connectedUsersList, "removeUser");
+    client.close();
+
+    // 3. Assert the user is recognized as disconnected
+    await waitFor(() => expect(removeUserSpy).toHaveBeenCalledTimes(1));
+
+    // 4. Assert the user is no longer in the testRoom
+    await waitFor(async () => {
+      expect((await rooms.findRoomById(testRoom.id)).users_in_room).toEqual([]);
+    });
+  });
+
+  it("removes room if it have been open for too long with no connected users", async () => {
+    const testRoom = await rooms.createRoom("123");
+
+    // The room should exist
+    expect(await rooms.findRoomById(testRoom.id)).toBeDefined();
+
+    // Set time to twice the required period to be considered abandoned
+    await database.query(
+      "UPDATE rooms SET last_active_date=NOW() - interval '35 minutes'"
+    );
+
+    await waitFor(async () => {
+      // After a period of time the room should be removed
+      expect(await rooms.findRoomById(testRoom.id)).not.toBeDefined();
+    });
   });
 });

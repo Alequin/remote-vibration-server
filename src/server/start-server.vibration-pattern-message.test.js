@@ -8,12 +8,11 @@ const { default: waitFor } = require("wait-for-expect");
 const startServer = require("./start-server");
 const rooms = require("../persistance/rooms");
 const messageTypes = require("../websocket/on-user-start-connection/message-types");
-const dropDatabase = require("../../script/drop-database");
-const createDatabase = require("../../script/create-database");
 const truncateDatabaseTables = require("../../script/truncate-database-tables");
 const database = require("../persistance/database");
 const messageHandlers = require("../websocket/on-user-start-connection/message-handlers");
 const { serverAuthToken } = require("../environment");
+const { connectedUsersList } = require("../websocket/connected-users");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -122,6 +121,121 @@ describe("startServer", () => {
     await connectToRoomAndSendMessage2;
 
     // 4. Send a vibration pattern to the room from second user
+    client2Connection.send(
+      JSON.stringify({
+        type: messageTypes.sendVibrationPattern,
+        data: {
+          vibrationPattern: mockVibrationPatternObject,
+          speed: 1,
+        },
+      })
+    );
+  });
+
+  it("updated users lastActive time when they receive a vibration from another user", async (done) => {
+    const mockVibrationPatternObject = { pattern: [] };
+
+    const testRoom = await rooms.createRoom("123");
+
+    const client1 = new WebSocketClient();
+    let user1Id = null;
+    let initialLastActive = null;
+
+    // 1. Connect first user and wait for the message to arrive
+    const connectToRoom1 = new Promise((resolve, reject) => {
+      client1.on("connect", (connection) => {
+        connection.send(
+          JSON.stringify({
+            type: messageTypes.connectToRoom,
+            data: { password: testRoom.password },
+          }),
+          resolve
+        );
+
+        connection.on("message", (message) => {
+          const parsedMessage = JSON.parse(message.utf8Data);
+
+          // 2. Confirm room connection
+          if (parsedMessage.type === messageTypes.confirmRoomConnection) {
+            expect(parsedMessage).toEqual({
+              type: messageTypes.confirmRoomConnection,
+            });
+          }
+
+          if (parsedMessage.type === messageTypes.receivedVibrationPattern) {
+            expect(user1Id).not.toBeNull();
+            expect(initialLastActive).not.toBeNull();
+
+            // 7. Assert user1's lastActive time was updated
+            const updatedLastActive = connectedUsersList.findUserById(user1Id)
+              .lastActive;
+            expect(updatedLastActive.getTime()).toBeGreaterThan(
+              initialLastActive.getTime()
+            );
+            done();
+          }
+        });
+      });
+      client1.on("connectFailed", reject);
+    });
+
+    client1.connect(
+      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
+      null,
+      null,
+      {
+        authToken: serverAuthToken,
+      }
+    );
+    await connectToRoom1;
+
+    // Confirm only one user is connected at this time
+    expect(connectedUsersList.count()).toBe(1);
+    // Store users id for future use
+    connectedUsersList.forEachUser((user) => (user1Id = user.id));
+
+    const client2 = new WebSocketClient();
+
+    // 3. Connect second user
+    let client2Connection = null;
+    const connectToRoomAndSendMessage2 = new Promise((resolve, reject) => {
+      client2.on("connect", (connection) => {
+        connection.send(
+          JSON.stringify({
+            type: messageTypes.connectToRoom,
+            data: { password: testRoom.password },
+          })
+        );
+
+        connection.on("message", (message) => {
+          const parsedMessage = JSON.parse(message.utf8Data);
+          if (parsedMessage.type === messageTypes.confirmRoomConnection) {
+            resolve();
+          }
+        });
+
+        client2Connection = connection;
+      });
+      client2.on("connectFailed", reject);
+    });
+
+    client2.connect(
+      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
+      null,
+      null,
+      {
+        authToken: serverAuthToken,
+      }
+    );
+    await connectToRoomAndSendMessage2;
+
+    // 4. Confirm user1's lastActive time before user2 sends a message
+    initialLastActive = connectedUsersList.findUserById(user1Id).lastActive;
+
+    // 5. delay to allow the last active time to be in the past
+    await new Promise((r) => setTimeout(r, 100));
+
+    // 6. Send a vibration pattern to the room from second user
     client2Connection.send(
       JSON.stringify({
         type: messageTypes.sendVibrationPattern,

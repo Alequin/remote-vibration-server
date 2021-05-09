@@ -1,6 +1,10 @@
 const { size } = require("lodash");
 const { v4: uuidv4 } = require("uuid");
 const { removeUserFromAllRooms } = require("../persistance/rooms");
+const assert = require("assert");
+const { minutes } = require("../to-milliseconds");
+
+const userMaxIdleTime = minutes(10);
 
 const newConnectedUsersList = () => {
   const connectedUsers = {};
@@ -10,9 +14,12 @@ const newConnectedUsersList = () => {
   };
 
   const addUser = (client) => {
+    assert(!!client, "A client must be provided when adding a user");
+
     const user = {
       id: uuidv4(),
       hasReceivedPong: true,
+      lastActive: new Date(),
       client,
     };
 
@@ -57,8 +64,14 @@ const hasReceivedPongFromUser = (user) => user.hasReceivedPong;
 
 const sendMessageToUser = (user, message) =>
   user.client.send(JSON.stringify(message));
+
 const sendErrorMessageToUser = (user, message) =>
   sendMessageToUser(user, { error: message });
+
+const updateUsersLastActiveTime = (user) => (user.lastActive = new Date());
+
+const isUserIdle = (user) =>
+  Date.now() - user.lastActive.getTime() > userMaxIdleTime;
 
 module.exports = {
   connectedUsersList: newConnectedUsersList(),
@@ -67,4 +80,7 @@ module.exports = {
   markUserAsNeedingToReceivePong,
   markUserAsHavingReceivePong,
   hasReceivedPongFromUser,
+  updateUsersLastActiveTime,
+  isUserIdle,
+  userMaxIdleTime,
 };

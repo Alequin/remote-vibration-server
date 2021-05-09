@@ -1,4 +1,8 @@
-const { connectedUsersList, sendMessageToUser } = require("../connected-users");
+const {
+  connectedUsersList,
+  sendMessageToUser,
+  updateUsersLastActiveTime,
+} = require("../connected-users");
 const messages = require("../../persistance/messages");
 const messageTypes = require("../on-user-start-connection/message-types");
 
@@ -13,6 +17,7 @@ const sendMessagesToUser = async () => {
       message.recipient_user_id
     );
 
+    updateUsersLastActiveTime(userToSendMessageTo);
     sendVibrationToRecipients(userToSendMessageTo, message);
   }
   await messages.removeMessagesByIds(messagesToSend.map(({ id }) => id));

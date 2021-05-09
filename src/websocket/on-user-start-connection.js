@@ -17,7 +17,7 @@ const onUserStartConnection = (wss) => {
 
     const currentUser = connectedUsers.connectedUsersList.addUser(client);
 
-    currentUser.client.on("message", onUserReceivedMessage(currentUser));
+    currentUser.client.on("message", onReceivedMessageFromUser(currentUser));
 
     currentUser.client.on("pong", () =>
       connectedUsers.markUserAsHavingReceivePong(currentUser)
@@ -25,7 +25,9 @@ const onUserStartConnection = (wss) => {
   });
 };
 
-const onUserReceivedMessage = (currentUser) => async (message) => {
+const onReceivedMessageFromUser = (currentUser) => async (message) => {
+  connectedUsers.updateUsersLastActiveTime(currentUser);
+
   const parsedMessage = parseJsonWithErrorHandling(message);
 
   if (isError(parsedMessage) || !isMessageValid(message, parsedMessage)) {

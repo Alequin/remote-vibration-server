@@ -11,17 +11,17 @@ jest.mock(
 const truncateDatabaseTables = require("../../script/truncate-database-tables");
 
 const fetch = require("node-fetch");
-var { client: WebSocketClient, w3cwebsocket } = require("websocket");
+const { client: WebSocketClient, w3cwebsocket } = require("websocket");
 const { default: waitFor } = require("wait-for-expect");
 const connectedUsers = require("../websocket/connected-users");
 const startServer = require("./start-server");
 const rooms = require("../persistance/rooms");
 const messageTypes = require("../websocket/on-user-start-connection/message-types");
-const database = require("../persistance/database");
 const { noop } = require("lodash");
 const environment = require("../environment");
 const { serverAuthToken } = require("../environment");
 const { connectedUsersList } = require("../websocket/connected-users");
+const { minutes } = require("../to-milliseconds");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -56,6 +56,7 @@ describe("startServer", () => {
 
     client.connect(
       `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
+      // TODO remove all use of headers in tests
       null,
       null,
       {
@@ -66,6 +67,50 @@ describe("startServer", () => {
     // Asserts connection to server resolves
     await expect(actual).resolves.toBeDefined();
     expect(connectedUsersList.count()).toBe(1);
+  });
+
+  it("updates uses lastActive time when they send a message via the websocket", async () => {
+    const client = new WebSocketClient();
+
+    const connection = new Promise((resolve, reject) => {
+      client.on("connect", (connection) => resolve(connection));
+      client.on("connectFailed", reject);
+    });
+
+    client.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
+    const resolvedConnection = await connection;
+
+    // 1. Confirm only one user is connected
+    expect(connectedUsersList.count()).toBe(1);
+
+    // 2. get connected user id
+    let userId = null;
+    connectedUsersList.forEachUser((user) => (userId = user.id));
+
+    // 3. get users last active time
+    const initialLastActive = connectedUsersList.findUserById(userId)
+      .lastActive;
+
+    // 4. delay to allow the last active time to be in the past
+    await new Promise((r) => setTimeout(r, 100));
+
+    // 5. send a message via the websocket
+    resolvedConnection.send(
+      JSON.stringify({
+        type: messageTypes.connectToRoom,
+        data: { password: "password" },
+      })
+    );
+
+    await waitFor(() => {
+      const updatedLastActive = connectedUsersList.findUserById(userId)
+        .lastActive;
+
+      // 6. Assert the last active time has updated
+      expect(updatedLastActive.getTime()).toBeGreaterThan(
+        initialLastActive.getTime()
+      );
+    });
   });
 
   it("errors if you do not provide an auth token", async () => {
@@ -133,80 +178,7 @@ describe("startServer", () => {
     expect(connectedUsersList.count()).toBe(0);
   });
 
-  it("removes users who are disconnected from the server from any rooms", async () => {
-    const mockRoomOwnerId = "123";
-    const testRoom = await rooms.createRoom(mockRoomOwnerId);
-
-    const client = new w3cwebsocket(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
-    const clientConnection = new Promise((resolve) => {
-      client.onopen = () => {
-        client.send(
-          JSON.stringify({
-            type: messageTypes.connectToRoom,
-            data: { password: testRoom.password },
-          })
-        );
-      };
-
-      client.onmessage = (message) => {
-        const parsedMessage = JSON.parse(message.data);
-        if (parsedMessage.type === messageTypes.confirmRoomConnection) {
-          expect(parsedMessage.type === messageTypes.confirmRoomConnection);
-          resolve();
-        }
-      };
-    });
-    await clientConnection;
-
-    await waitFor(async () => {
-      // 1. Assert the user has connected to the room
-      const users_in_room = (await rooms.findRoomById(testRoom.id))
-        ?.users_in_room;
-
-      expect(users_in_room.length).toBe(1);
-    });
-
-    // 2. close the clients connection
-    const removeUserSpy = jest.spyOn(
-      connectedUsers.connectedUsersList,
-      "removeUser"
-    );
-    client.close();
-
-    // 3. Assert the user is recognized as disconnected
-    await waitFor(() => expect(removeUserSpy).toHaveBeenCalledTimes(1));
-
-    // 4. Assert the user is no longer in the testRoom
-    await waitFor(async () => {
-      expect((await rooms.findRoomById(testRoom.id)).users_in_room).toEqual([]);
-    });
-  });
-
-  it("removes room if it have been open for too long with no connected users", async () => {
-    const testRoom = await rooms.createRoom("123");
-
-    // The room should exist
-    expect(await rooms.findRoomById(testRoom.id)).toBeDefined();
-
-    // Set time to twice the required period to be considered abandoned
-    await database.query(
-      "UPDATE rooms SET last_active_date=NOW() - interval '35 minutes'"
-    );
-
-    await waitFor(async () =>
-      // After a period of time the room should be removed
-      expect(await rooms.findRoomById(testRoom.id)).not.toBeDefined()
-    );
-  });
-
-  it("removes clients which do not return a 'pong' when the server returns a ping", async () => {
+  it("disconnects users which do not return a 'pong' when the server returns a ping", async () => {
     // Do nothing to fake the user not receiving the pong from the client
     jest
       .spyOn(connectedUsers, "markUserAsHavingReceivePong")
@@ -250,10 +222,44 @@ describe("startServer", () => {
 
     // 1. Assert the user is recognized as disconnected
     await waitFor(() => expect(removeUserSpy).toHaveBeenCalledTimes(1));
+    expect(connectedUsersList.count()).toBe(0);
 
     // 2. Assert the user is no longer in the testRoom
     await waitFor(async () => {
       expect((await rooms.findRoomById(testRoom.id)).users_in_room).toEqual([]);
+    });
+  });
+
+  it("disconnects users who have been idle for 10 minutes", async () => {
+    const removeUserSpy = jest.spyOn(
+      connectedUsers.connectedUsersList,
+      "removeUser"
+    );
+
+    const client = new WebSocketClient();
+
+    const connection = new Promise((resolve, reject) => {
+      client.on("connect", (connection) => resolve(connection));
+      client.on("connectFailed", reject);
+    });
+
+    client.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
+    await connection;
+
+    // 1. Confirm only one user is connected
+    expect(connectedUsersList.count()).toBe(1);
+
+    // 2. get connected user
+    let testUser = null;
+    connectedUsersList.forEachUser((user) => (testUser = user));
+
+    // 3. fake user being inactive for 10 minutes
+    testUser.lastActive = new Date(Date.now() - connectedUsers.userMaxIdleTime);
+
+    // 4. assert use has being disconnected
+    await waitFor(() => {
+      expect(removeUserSpy).toHaveBeenCalledTimes(1);
+      expect(connectedUsersList.count()).toBe(0);
     });
   });
 
