@@ -54,15 +54,7 @@ describe("startServer", () => {
       client.on("connectFailed", reject);
     });
 
-    client.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      // TODO remove all use of headers in tests
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
 
     // Asserts connection to server resolves
     await expect(actual).resolves.toBeDefined();
@@ -124,12 +116,7 @@ describe("startServer", () => {
 
   it("disconnects users when the client closes the connection", async () => {
     const client = new w3cwebsocket(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
+      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`
     );
 
     const clientConnection = new Promise((resolve) => {
@@ -193,12 +180,7 @@ describe("startServer", () => {
     const testRoom = await rooms.createRoom(mockRoomOwnerId);
 
     const client = new w3cwebsocket(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
+      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`
     );
     const clientConnection = new Promise((resolve) => {
       client.onopen = () => {

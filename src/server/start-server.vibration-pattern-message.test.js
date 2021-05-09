@@ -75,14 +75,7 @@ describe("startServer", () => {
       client1.on("connectFailed", reject);
     });
 
-    client1.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client1.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoom1;
 
     const client2 = new WebSocketClient();
@@ -110,14 +103,7 @@ describe("startServer", () => {
       client2.on("connectFailed", reject);
     });
 
-    client2.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client2.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoomAndSendMessage2;
 
     // 4. Send a vibration pattern to the room from second user
@@ -179,14 +165,7 @@ describe("startServer", () => {
       client1.on("connectFailed", reject);
     });
 
-    client1.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client1.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoom1;
 
     // Confirm only one user is connected at this time
@@ -219,14 +198,7 @@ describe("startServer", () => {
       client2.on("connectFailed", reject);
     });
 
-    client2.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client2.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoomAndSendMessage2;
 
     // 4. Confirm user1's lastActive time before user2 sends a message
@@ -284,14 +256,7 @@ describe("startServer", () => {
       client1.on("connectFailed", reject);
     });
 
-    client1.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client1.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoom1;
 
     const client2 = new WebSocketClient();
@@ -319,14 +284,7 @@ describe("startServer", () => {
       client2.on("connectFailed", reject);
     });
 
-    client2.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client2.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoomAndSendMessage2;
 
     // 3. Send a vibration pattern to the room from second user
@@ -386,14 +344,7 @@ describe("startServer", () => {
       client1.on("connectFailed", reject);
     });
 
-    client1.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client1.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoom1;
 
     const client2 = new WebSocketClient();
@@ -426,14 +377,7 @@ describe("startServer", () => {
       client2.on("connectFailed", reject);
     });
 
-    client2.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client2.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoom2;
 
     const client3 = new WebSocketClient();
@@ -475,14 +419,7 @@ describe("startServer", () => {
       client3.on("connectFailed", reject);
     });
 
-    client3.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client3.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoomAndSendMessage3;
 
     // 6. Send a message to the room from third user
@@ -552,14 +489,7 @@ describe("startServer", () => {
       client1.on("connectFailed", reject);
     });
 
-    client1.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client1.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoom1;
 
     const client2 = new WebSocketClient();
@@ -587,14 +517,7 @@ describe("startServer", () => {
       client2.on("connectFailed", reject);
     });
 
-    client2.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client2.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoomAndSendMessage2;
 
     // 4. Send multiple vibration patterns to the room from second user
@@ -639,14 +562,7 @@ describe("startServer", () => {
       client.on("connectFailed", reject);
     });
 
-    client.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoomAndSendMessage2;
 
     clientConnection.on("message", (message) => {
@@ -701,14 +617,7 @@ describe("startServer", () => {
       client2.on("connectFailed", reject);
     });
 
-    client2.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client2.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoomAndSendMessage2;
 
     client2Connection.on("message", (message) => {
@@ -763,14 +672,7 @@ describe("startServer", () => {
       client2.on("connectFailed", reject);
     });
 
-    client2.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client2.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoomAndSendMessage2;
 
     client2Connection.on("message", (message) => {
@@ -816,14 +718,7 @@ describe("startServer", () => {
     client1.on("connectFailed", () => {
       throw new Error("connectFailed");
     });
-    client1.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client1.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
   });
 
   it("disconnects users if they send an invalid message which is not an object", async (done) => {
@@ -839,14 +734,7 @@ describe("startServer", () => {
     client1.on("connectFailed", () => {
       throw new Error("connectFailed");
     });
-    client1.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client1.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
   });
 
   it("disconnects users if they send invalid messages with a non string type", async (done) => {
@@ -862,14 +750,7 @@ describe("startServer", () => {
     client1.on("connectFailed", () => {
       throw new Error("connectFailed");
     });
-    client1.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client1.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
   });
 
   it("disconnects users if they send messages which have no handlers", async (done) => {
@@ -889,14 +770,7 @@ describe("startServer", () => {
     client1.on("connectFailed", () => {
       throw new Error("connectFailed");
     });
-    client1.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client1.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
   });
 
   it("disconnects users if they send messages which are too large", async (done) => {
@@ -917,13 +791,6 @@ describe("startServer", () => {
     client1.on("connectFailed", () => {
       throw new Error("connectFailed");
     });
-    client1.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client1.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
   });
 });

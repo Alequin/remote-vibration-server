@@ -68,14 +68,7 @@ describe("startServer", () => {
       client.on("connectFailed", reject);
     });
 
-    client.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoomAndSendMessage;
   });
 
@@ -100,14 +93,7 @@ describe("startServer", () => {
       client.on("connectFailed", reject);
     });
 
-    client.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoomAndSendMessage;
 
     await waitFor(async () => {
@@ -143,12 +129,7 @@ describe("startServer", () => {
       });
 
       client.connect(
-        `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-        null,
-        null,
-        {
-          authToken: serverAuthToken,
-        }
+        `ws://localhost:${testPort}/?authToken=${serverAuthToken}`
       );
       await connectToRoomAndSendMessage;
     }
@@ -185,14 +166,7 @@ describe("startServer", () => {
       client.on("connectFailed", reject);
     });
 
-    client.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoomAndSendMessage;
   });
 
@@ -220,14 +194,7 @@ describe("startServer", () => {
       client.on("connectFailed", reject);
     });
 
-    client.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
     await connectToRoomAndSendMessage;
   });
 
@@ -270,14 +237,7 @@ describe("startServer", () => {
         })
       );
     });
-    client.connect(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
-    );
+    client.connect(`ws://localhost:${testPort}/?authToken=${serverAuthToken}`);
   });
 
   it("removes users who are disconnected from the server from any rooms", async () => {
@@ -285,12 +245,7 @@ describe("startServer", () => {
     const testRoom = await rooms.createRoom(mockRoomOwnerId);
 
     const client = new w3cwebsocket(
-      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`,
-      null,
-      null,
-      {
-        authToken: serverAuthToken,
-      }
+      `ws://localhost:${testPort}/?authToken=${serverAuthToken}`
     );
     const clientConnection = new Promise((resolve) => {
       client.onopen = () => {
