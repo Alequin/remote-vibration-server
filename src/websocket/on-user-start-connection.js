@@ -22,6 +22,8 @@ const onUserStartConnection = (wss) => {
     currentUser.client.on("pong", () =>
       connectedUsers.markUserAsHavingReceivePong(currentUser)
     );
+
+    logger.info(`User connected: ${currentUser.id}`);
   });
 };
 
