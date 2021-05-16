@@ -12,7 +12,8 @@
     "drop-local-database": "cross-env NODE_ENV=local node ./script/drop-database.js",
     "recreate-local-database": "npm run drop-local-database && npm run create-local-database",
     "truncate-local-database": "cross-env NODE_ENV=local node ./script/truncate-database-tables.js",
-    "create-production-database": "cross-env NODE_ENV=production node ./script/create-database.js"
+    "create-production-database": "cross-env NODE_ENV=production node ./script/create-database.js",
+    "server-logs": "heroku logs -a remote-vibration-server --tail"
   },
   "keywords": [],
   "author": "",
