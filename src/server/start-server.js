@@ -19,6 +19,7 @@ const startServer = async ({ port }) =>
     app.use(express.json());
 
     healthEndpoint(app);
+    app.use(express.static("public"));
     checkAuthTokenMiddleware(app);
     confirmDeviceIdHeaderMiddleware(app);
     roomEndpoints.createRoom(app);
