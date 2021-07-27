@@ -5,6 +5,7 @@ const insertNewRoom = require("./queries/insert-new-room");
 const selectFromRooms = require("./queries/select-from-rooms");
 const updateRooms = require("./queries/update-rooms");
 const deleteFromRooms = require("./queries/delete-from-rooms");
+const logger = require("../logger");
 
 const createRoom = async (creatorDeviceId) => {
   assert(!isNil(creatorDeviceId));
@@ -35,7 +36,13 @@ const newUniqueRoomKey = async () => {
 };
 
 const findRoomById = async (roomId) => selectFromRooms.byRoomId(roomId);
-const findRoomByUser = async ({ id }) => selectFromRooms.byUserId(id);
+const findRoomByUser = async ({ id }) => {
+  const room = await selectFromRooms.byUserId(id);
+  if (!room) {
+    throw new Error(`Unable to find a room for the user with an id of ${id}`);
+  }
+  return room;
+};
 const findRoomByKey = async (password) => selectFromRooms.byPassword(password);
 const findRoomByCreatorId = (creatorDeviceId) =>
   selectFromRooms.byCreatorId(creatorDeviceId);
