@@ -11,7 +11,7 @@ const deleteRoomById = async (roomId) =>
 const deleteAbandonedRooms = async () =>
   database.query(
     `
-    DELETE FROM rooms WHERE last_active_date < NOW() - INTERVAL '30 minutes'
+    DELETE FROM rooms WHERE last_active_date < NOW() - INTERVAL '1 hour'
     `
   );
 
