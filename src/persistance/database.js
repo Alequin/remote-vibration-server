@@ -27,7 +27,7 @@ const setupDatabaseInterface = () => {
 
       return rows;
     } catch (error) {
-      logger.error("Unable to call database query");
+      logger.error(`Unable to call database query: ${query}`);
       throw error;
     }
   };
