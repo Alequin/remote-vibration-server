@@ -4,7 +4,6 @@ const CLOSE_EVENTS = [
   "SIGINT",
   "SIGTERM",
   "SIGHUP",
-  "SIGKILL",
   "SIGBUS",
   "SIGFPE",
   "SIGSEGV",
