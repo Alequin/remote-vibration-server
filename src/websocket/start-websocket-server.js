@@ -29,7 +29,7 @@ const startServer = async () => {
     closeServer: async () => {
       const onClose = new Promise((resolve) =>
         server.on("close", async () => {
-          cleanUpNewMessageWatcher();
+          await cleanUpNewMessageWatcher();
           aliveLoop.stop();
           activeRoomsLoop.stop();
           await connectedUsersList.removeAllUsers();

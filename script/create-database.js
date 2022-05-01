@@ -8,7 +8,6 @@ const createDatabase = async () => {
   if (!environment.isEnvProduction()) {
     await setUpDatabaseLocally(databaseName);
   }
-  await database.connect(databaseName);
 
   await createDatabaseTables(databaseName);
 
@@ -16,9 +15,6 @@ const createDatabase = async () => {
 };
 
 const setUpDatabaseLocally = async (databaseName) => {
-  // Create a connection without a target database
-  await database.connect();
-
   if (await doesDatabaseExist(databaseName)) {
     console.log(`Database already exists / databaseName: ${databaseName}`);
     return;
@@ -31,8 +27,6 @@ const setUpDatabaseLocally = async (databaseName) => {
 };
 
 const createDatabaseTables = async (databaseName) => {
-  await database.connect(databaseName);
-
   await database.query(`
     CREATE TABLE IF NOT EXISTS rooms (
       id SERIAL PRIMARY KEY,
