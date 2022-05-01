@@ -1,12 +1,17 @@
 const { uniqueId, map, size } = require("lodash");
 const logger = require("../../logger");
+const { seconds } = require("../../to-milliseconds");
 const { openConnection } = require("./open-connection");
 
-const activeClients = {};
-const idleClients = {};
+const activeConnections = {};
+const idleConnections = {};
 const openManagedConnection = async (options) => {
   try {
     const connection = await getConntection(options);
+    console.log(
+      "🚀 ~ file: open-managed-connections.js ~ line 11 ~ openManagedConnection ~ connection",
+      connection.id
+    );
 
     moveConnectionToActive(connection.id);
     return connection;
@@ -17,16 +22,24 @@ const openManagedConnection = async (options) => {
 };
 
 const MAX_CLIENTS = 10;
+const CONNECTIION_LIFE_SPAN = seconds(10);
 const getConntection = async (options) => {
   // Wait for clients to become idle
-  await sleepUntil(() => size(activeClients) < MAX_CLIENTS, 10_000);
+  await sleepUntil(() => size(activeConnections) < MAX_CLIENTS, 10_000);
 
-  const connection =
-    size(idleClients) >= MAX_CLIENTS
-      ? idleClients[Object.keys(idleClients)[0]]
-      : await setupNewManagedConnection(options);
+  const idleConnection = idleConnections[Object.keys(idleConnections)[0]];
+  const hasClientTimedOut =
+    idleConnection &&
+    idleConnection.lastQueryTime < Date.now() - CONNECTIION_LIFE_SPAN;
 
-  return connection;
+  if (hasClientTimedOut) {
+    cleanUpIdleConnection(idleConnection);
+    return await setupNewManagedConnection(options);
+  }
+
+  return idleConnection && size(idleConnections) >= MAX_CLIENTS
+    ? idleConnection
+    : await setupNewManagedConnection(options);
 };
 
 const sleepUntil = async (f, timeoutMs) => {
@@ -51,8 +64,10 @@ const setupNewManagedConnection = async (options) => {
   const connectionId = uniqueId();
   const connection = {
     id: connectionId,
+    lastQueryTime: Date.now(),
     query: async (query, variables) => {
       try {
+        this.lastQueryTime = Date.now();
         return await rawConnection.client.query(query, variables);
       } catch (error) {
         throw error;
@@ -62,29 +77,41 @@ const setupNewManagedConnection = async (options) => {
     },
     closeConnection: async () => {
       await rawConnection.closeConnection();
-      delete idleClients[connectionId];
-      delete activeClients[connectionId];
+      delete idleConnections[connectionId];
+      delete activeConnections[connectionId];
     },
   };
 
-  idleClients[connectionId] = connection;
+  idleConnections[connectionId] = connection;
   return connection;
 };
 
 const moveConnectionToActive = (conntectionId) => {
-  activeClients[conntectionId] = idleClients[conntectionId];
-  delete idleClients[conntectionId];
+  activeConnections[conntectionId] = idleConnections[conntectionId];
+  delete idleConnections[conntectionId];
 };
 
 const moveConnectionToIdle = (conntectionId) => {
-  idleClients[conntectionId] = activeClients[conntectionId];
-  delete activeClients[conntectionId];
+  idleConnections[conntectionId] = activeConnections[conntectionId];
+  delete activeConnections[conntectionId];
 };
+
+const cleanUpIdleConnection = async (connection) => {
+  delete idleConnections[connection.id];
+  await connection.closeConnection();
+};
+
+const hasConnectionTimedOut = (connection) =>
+  connection.lastQueryTime > Date.now() - seconds(10);
 
 const disconnect = async () => {
   await Promise.all([
-    ...map(idleClients, async (connection) => connection?.closeConnection()),
-    ...map(activeClients, async (connection) => connection?.closeConnection()),
+    ...map(idleConnections, async (connection) =>
+      connection?.closeConnection()
+    ),
+    ...map(activeConnections, async (connection) =>
+      connection?.closeConnection()
+    ),
   ]);
 };
 
