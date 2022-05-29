@@ -1,4 +1,4 @@
-const { isPlainObject, isError } = require("lodash");
+const { isPlainObject, isError, isString } = require("lodash");
 const logger = require("../logger");
 const connectedUsers = require("./connected-users");
 const messageHandlers = require("./on-user-start-connection/message-handlers");
@@ -32,9 +32,17 @@ const onReceivedMessageFromUser = (currentUser) => async (message) => {
 
   const parsedMessage = parseJsonWithErrorHandling(message);
 
-  if (isError(parsedMessage) || !isMessageValid(message, parsedMessage)) {
+  if (isError(parsedMessage)) {
     logger.warn(
-      `User disconnected to due to an invalid message / Message: ${message}`
+      `User disconnected to due to an invalid message, unable to parse / Message: ${message}`
+    );
+    return connectedUsers.connectedUsersList.removeUser(currentUser);
+  }
+
+  const { invalidMessageReason } = isMessageValid(message, parsedMessage);
+  if (invalidMessageReason) {
+    logger.warn(
+      `User disconnected to due to an invalid message, bad message data / Reason: ${invalidMessageReason}, Message: ${message}`
     );
     return connectedUsers.connectedUsersList.removeUser(currentUser);
   }
@@ -58,12 +66,34 @@ const onReceivedMessageFromUser = (currentUser) => async (message) => {
 const authTokenFromSearchParams = (url) =>
   new URLSearchParams(url.replace(/^.*\?/, "")).get("authToken");
 
-const isMessageValid = (message, parsedMessage) =>
-  !isMessageToLarge(message) &&
-  isPlainObject(parsedMessage) &&
-  typeof parsedMessage.type === "string";
+const isMessageValid = (message, parsedMessage) => {
+  if (isMessageToLarge(message)) {
+    return {
+      isValid: false,
+      invalidMessageReason: "Message too large",
+    };
+  }
 
-const MAX_MESSAGE_SIZE_IN_BYTES = 300;
+  if (!isPlainObject(parsedMessage)) {
+    return {
+      isValid: false,
+      invalidMessageReason: "Message is not a plain object",
+    };
+  }
+
+  if (!isString(parsedMessage.type)) {
+    return {
+      isValid: false,
+      invalidMessageReason: "Message type is not usable",
+    };
+  }
+
+  return {
+    isMessageValid: true,
+  };
+};
+
+const MAX_MESSAGE_SIZE_IN_BYTES = 1000;
 const isMessageToLarge = (message) =>
   Buffer.byteLength(message, "utf8") > MAX_MESSAGE_SIZE_IN_BYTES;
 
