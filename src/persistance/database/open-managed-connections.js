@@ -8,10 +8,6 @@ const idleConnections = {};
 const openManagedConnection = async (options) => {
   try {
     const connection = await getConntection(options);
-    console.log(
-      "🚀 ~ file: open-managed-connections.js ~ line 11 ~ openManagedConnection ~ connection",
-      connection.id
-    );
 
     moveConnectionToActive(connection.id);
     return connection;

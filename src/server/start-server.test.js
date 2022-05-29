@@ -129,33 +129,6 @@ describe("startServer", () => {
     });
   });
 
-  describe("When the client closes the connection", () => {
-    const context = startServerTest();
-
-    it("disconnects users when the client closes the connection", async () => {
-      const client = new w3cwebsocket(
-        `ws://localhost:${context.server.port}/?authToken=${serverAuthToken}`
-      );
-
-      const clientConnection = new Promise((resolve) => {
-        client.onopen = resolve;
-      });
-
-      await clientConnection;
-
-      const removeUserSpy = jest.spyOn(
-        connectedUsers.connectedUsersList,
-        "removeUser"
-      );
-      client.close();
-
-      // Assert the user is recognized as disconnected
-      await waitFor(() => {
-        expect(removeUserSpy).toHaveBeenCalledTimes(1);
-      });
-    });
-  });
-
   describe("When a user tries to connection without an auth token", () => {
     const context = startServerTest();
 
@@ -191,100 +164,6 @@ describe("startServer", () => {
 
       await actual;
       expect(connectedUsersList.count()).toBe(0);
-    });
-  });
-
-  describe("When the user does not return a 'pong' when the server returns a ping", () => {
-    const context = startServerTest();
-
-    it("disconnects the user", async () => {
-      // Do nothing to fake the user not receiving the pong from the client
-      jest
-        .spyOn(connectedUsers, "markUserAsHavingReceivePong")
-        .mockImplementationOnce(noop);
-
-      const removeUserSpy = jest.spyOn(
-        connectedUsers.connectedUsersList,
-        "removeUser"
-      );
-
-      const mockRoomOwnerId = "123";
-      const testRoom = await rooms.createRoom(mockRoomOwnerId);
-
-      const client = new w3cwebsocket(
-        `ws://localhost:${context.server.port}/?authToken=${serverAuthToken}`
-      );
-      const clientConnection = new Promise((resolve) => {
-        client.onopen = () => {
-          client.send(
-            JSON.stringify({
-              type: messageTypes.connectToRoom,
-              data: { password: testRoom.password },
-            })
-          );
-        };
-
-        client.onmessage = (message) => {
-          const parsedMessage = JSON.parse(message.data);
-          if (parsedMessage.type === messageTypes.confirmRoomConnection) {
-            expect(parsedMessage.type === messageTypes.confirmRoomConnection);
-            resolve();
-          }
-        };
-      });
-      await clientConnection;
-
-      // 1. Assert the user is recognized as disconnected
-      await waitFor(() => expect(removeUserSpy).toHaveBeenCalledTimes(1));
-      expect(connectedUsersList.count()).toBe(0);
-
-      // 2. Assert the user is no longer in the testRoom
-      await waitFor(async () => {
-        expect((await rooms.findRoomById(testRoom.id)).users_in_room).toEqual(
-          []
-        );
-      });
-    });
-  });
-
-  describe("When the user has been idle for more than 10 minutes", () => {
-    const context = startServerTest();
-
-    it("disconnects the user", async () => {
-      const removeUserSpy = jest.spyOn(
-        connectedUsers.connectedUsersList,
-        "removeUser"
-      );
-
-      const client = new WebSocketClient();
-
-      const connection = new Promise((resolve, reject) => {
-        client.on("connect", (connection) => resolve(connection));
-        client.on("connectFailed", reject);
-      });
-
-      client.connect(
-        `ws://localhost:${context.server.port}/?authToken=${serverAuthToken}`
-      );
-      await connection;
-
-      // 1. Confirm only one user is connected
-      expect(connectedUsersList.count()).toBe(1);
-
-      // 2. get connected user
-      let testUser = null;
-      connectedUsersList.forEachUser((user) => (testUser = user));
-
-      // 3. fake user being inactive for 10 minutes
-      testUser.lastActive = new Date(
-        Date.now() - connectedUsers.userMaxIdleTime
-      );
-
-      // 4. assert use has being disconnected
-      await waitFor(() => {
-        expect(removeUserSpy).toHaveBeenCalledTimes(1);
-        expect(connectedUsersList.count()).toBe(0);
-      });
     });
   });
 

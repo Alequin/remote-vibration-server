@@ -4,7 +4,7 @@ const { removeUserFromAllRooms } = require("../persistance/rooms");
 const assert = require("assert");
 const { minutes } = require("../to-milliseconds");
 
-const userMaxIdleTime = minutes(10);
+const userMaxIdleTime = minutes(2);
 
 const newConnectedUsersList = () => {
   const connectedUsers = {};
@@ -18,7 +18,7 @@ const newConnectedUsersList = () => {
 
     const user = {
       id: uuidv4(),
-      hasReceivedPong: true,
+      hasReceivedPong: true, // TODO remove in favour of heartbeat once no longer used
       lastActive: new Date(),
       client,
     };
