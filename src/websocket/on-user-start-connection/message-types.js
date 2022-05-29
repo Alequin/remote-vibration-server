@@ -1,5 +1,5 @@
 module.exports = Object.freeze({
-  heartbeat: "heartbeat",
+  receivedHeartbeat: "heartbeat",
   connectToRoom: "connectToRoom",
   sendMessage: "sendMessage",
   sendVibrationPattern: "sendVibrationPattern", // sent by client when send a vibration pattern

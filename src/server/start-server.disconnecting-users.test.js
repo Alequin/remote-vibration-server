@@ -95,7 +95,7 @@ describe("startServer", () => {
         const startTime = Date.now();
         const interval = setInterval(() => {
           JSON.stringify({
-            type: messageTypes.heartbeat,
+            type: messageTypes.receivedHeartbeat,
           });
 
           const hasTimoutTimePassed =
