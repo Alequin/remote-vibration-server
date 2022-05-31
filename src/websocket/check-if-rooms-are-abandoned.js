@@ -4,12 +4,15 @@ const {
 const rooms = require("../persistance/rooms");
 
 const checkIfRoomsAreAbandoned = () => {
-  const interval = setInterval(async () => {
-    await rooms.markRoomsWithUsersAsActive();
-    await rooms.removeAbandonedRooms();
-  }, checkRoomsInterval());
+  cleanUpRooms();
+  const interval = setInterval(cleanUpRooms, checkRoomsInterval());
 
   return { stop: () => clearInterval(interval) };
+};
+
+const cleanUpRooms = async () => {
+  await rooms.markRoomsWithUsersAsActive();
+  await rooms.removeAbandonedRooms();
 };
 
 module.exports = checkIfRoomsAreAbandoned;
