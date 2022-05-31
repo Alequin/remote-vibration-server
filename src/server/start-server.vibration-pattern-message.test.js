@@ -5,7 +5,6 @@ jest.mock(
 
 var { client: WebSocketClient } = require("websocket");
 const { default: waitFor } = require("wait-for-expect");
-const startServer = require("./start-server");
 const rooms = require("../persistance/rooms");
 const messageTypes = require("../websocket/on-user-start-connection/message-types");
 const truncateDatabaseTables = require("../../script/truncate-database-tables");
@@ -14,6 +13,7 @@ const messageHandlers = require("../websocket/on-user-start-connection/message-h
 const { serverAuthToken } = require("../environment");
 const { connectedUsersList } = require("../websocket/connected-users");
 const { startServerTest } = require("./test-utils");
+const logger = require("../logger");
 
 waitFor.defaults.timeout = 15000;
 waitFor.defaults.interval = 1000;
@@ -22,6 +22,7 @@ describe("startServer", () => {
   beforeEach(async () => {
     await truncateDatabaseTables();
     jest.clearAllMocks();
+    jest.spyOn(logger, "warn");
   });
 
   describe("When a user sends a vibration pattern to other users in the same room", () => {
@@ -764,12 +765,47 @@ describe("startServer", () => {
     const context = startServerTest();
 
     it("disconnects the user", async (done) => {
+      const mockMessage = "//;;''";
+
       const client1 = new WebSocketClient();
 
       client1.on("connect", (connection) => {
-        connection.send("//;;''");
+        connection.send(mockMessage);
 
         connection.on("close", () => {
+          expect(logger.warn).toHaveBeenCalledWith(
+            `User disconnected to due to an invalid message, unable to parse / Message: ${mockMessage}`
+          );
+          done();
+        });
+      });
+      client1.on("connectFailed", () => {
+        throw new Error("connectFailed");
+      });
+      client1.connect(
+        `ws://localhost:${context.server.port}/?authToken=${serverAuthToken}`
+      );
+    });
+  });
+
+  describe("When a user sends a message which is too large", () => {
+    const context = startServerTest();
+
+    it("disconnects the user ", async (done) => {
+      const mockMessage = JSON.stringify({
+        type: messageHandlers.connectToRoom,
+        bigProperty: "bad message type".repeat(500),
+      });
+
+      const client1 = new WebSocketClient();
+
+      client1.on("connect", (connection) => {
+        connection.send(mockMessage);
+
+        connection.on("close", () => {
+          expect(logger.warn).toHaveBeenCalledWith(
+            `User disconnected to due to an invalid message, bad message data / Reason: Message too large, Message: ${mockMessage}`
+          );
           done();
         });
       });
@@ -786,12 +822,17 @@ describe("startServer", () => {
     const context = startServerTest();
 
     it("disconnects the user", async (done) => {
+      const mockMessage = JSON.stringify("123");
+
       const client1 = new WebSocketClient();
 
       client1.on("connect", (connection) => {
-        connection.send(JSON.stringify("123"));
+        connection.send(mockMessage);
 
         connection.on("close", () => {
+          expect(logger.warn).toHaveBeenCalledWith(
+            `User disconnected to due to an invalid message, bad message data / Reason: Message is not a plain object, Message: ${mockMessage}`
+          );
           done();
         });
       });
@@ -808,12 +849,17 @@ describe("startServer", () => {
     const context = startServerTest();
 
     it("disconnects the user", async (done) => {
+      const mockMessage = JSON.stringify({ type: { a: 1 } });
+
       const client1 = new WebSocketClient();
 
       client1.on("connect", (connection) => {
-        connection.send(JSON.stringify({ type: { a: 1 } }));
+        connection.send(mockMessage);
 
         connection.on("close", () => {
+          expect(logger.warn).toHaveBeenCalledWith(
+            `User disconnected to due to an invalid message, bad message data / Reason: Message type is not usable, Message: ${mockMessage}`
+          );
           done();
         });
       });
@@ -836,33 +882,6 @@ describe("startServer", () => {
         connection.send(
           JSON.stringify({
             type: "bad message type",
-          })
-        );
-
-        connection.on("close", () => {
-          done();
-        });
-      });
-      client1.on("connectFailed", () => {
-        throw new Error("connectFailed");
-      });
-      client1.connect(
-        `ws://localhost:${context.server.port}/?authToken=${serverAuthToken}`
-      );
-    });
-  });
-
-  describe("When a user sends a message which is too large", () => {
-    const context = startServerTest();
-
-    it("disconnects the user ", async (done) => {
-      const client1 = new WebSocketClient();
-
-      client1.on("connect", (connection) => {
-        connection.send(
-          JSON.stringify({
-            type: messageHandlers.connectToRoom,
-            bigProperty: "bad message type".repeat(30),
           })
         );
 

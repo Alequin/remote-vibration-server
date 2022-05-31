@@ -159,11 +159,16 @@ describe("startServer", () => {
       });
 
       // 2. Assert the user is recognized as disconnected
-      await waitFor(() => expect(removeUserSpy).toHaveBeenCalledTimes(1), {
-        timeout: 150_000,
-        interval: 1_000,
-      });
-      expect(connectedUsersList.count()).toBe(0);
+      await waitFor(
+        () => {
+          expect(removeUserSpy).toHaveBeenCalledTimes(1);
+          expect(connectedUsersList.count()).toBe(0);
+        },
+        {
+          timeout: 150_000,
+          interval: 1_000,
+        }
+      );
 
       // 3. Assert the user is no longer in the testRoom
       await waitFor(async () => {

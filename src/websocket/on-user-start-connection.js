@@ -69,28 +69,23 @@ const authTokenFromSearchParams = (url) =>
 const isMessageValid = (message, parsedMessage) => {
   if (isMessageToLarge(message)) {
     return {
-      isValid: false,
       invalidMessageReason: "Message too large",
     };
   }
 
   if (!isPlainObject(parsedMessage)) {
     return {
-      isValid: false,
       invalidMessageReason: "Message is not a plain object",
     };
   }
 
-  if (!isString(parsedMessage.type)) {
+  if (!isString(parsedMessage?.type)) {
     return {
-      isValid: false,
       invalidMessageReason: "Message type is not usable",
     };
   }
 
-  return {
-    isMessageValid: true,
-  };
+  return { invalidMessageReason: null };
 };
 
 const MAX_MESSAGE_SIZE_IN_BYTES = 1000;
