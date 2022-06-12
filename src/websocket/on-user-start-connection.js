@@ -7,6 +7,7 @@ const isAuthTokenValid = require("../server/check-auth-token");
 
 const onUserStartConnection = (wss) => {
   wss.on("connection", (client, req) => {
+    logger.info("Connection started");
     // Query string used as connections from mobile seem to pass custom headers to the server
     const authToken = authTokenFromSearchParams(req.url);
     if (!isAuthTokenValid(authToken)) {
